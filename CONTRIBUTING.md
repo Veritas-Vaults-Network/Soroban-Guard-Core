@@ -17,3 +17,10 @@ Thank you for helping improve the static analyzer. This guide covers **local set
    ```bash
    git clone https://github.com/Veritas-Vaults-Network/soroban-guard-core.git
    cd soroban-guard-core
+   ```
+
+3. **Build and run the full test suite:**
+
+   ```bash
+   cargo build --workspace
+   cargo test --workspace
