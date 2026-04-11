@@ -4,3 +4,10 @@ Thank you for helping improve the static analyzer. This guide covers **local set
 
 ## Local development setup
 
+1. **Install Rust** (1.74 or newer recommended) using [rustup](https://rustup.rs/):
+
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   source "$HOME/.cargo/env"
+   rustc --version
+   ```
