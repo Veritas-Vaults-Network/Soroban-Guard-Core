@@ -89,3 +89,10 @@ struct StorageCallCount {
 }
 
 impl<'ast> Visit<'ast> for StorageCallCount {
+    fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
+        if i.method == "storage" {
+            self.storage_methods += 1;
+        }
+        visit::visit_expr_method_call(self, i);
+    }
+
