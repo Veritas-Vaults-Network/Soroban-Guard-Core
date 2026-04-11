@@ -63,3 +63,10 @@ The workspace enables **`syn` with the `full` feature** (see root `Cargo.toml` â
 use syn::{parse_file, Item};
 
 fn list_struct_names(src: &str) -> Result<Vec<String>, syn::Error> {
+    let file = parse_file(src)?;
+    let mut names = Vec::new();
+    for item in &file.items {
+        if let Item::Struct(s) = item {
+            names.push(s.ident.to_string());
+        }
+    }
