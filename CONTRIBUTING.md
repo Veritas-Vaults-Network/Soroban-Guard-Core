@@ -30,3 +30,10 @@ Thank you for helping improve the static analyzer. This guide covers **local set
 
    ```bash
    cargo run -p soroban-guard-cli -- scan test-contracts/vulnerable
+   cargo run -p soroban-guard-cli -- scan test-contracts/safe --json
+   ```
+
+5. **Standalone Soroban crates** — Paths under `test-contracts/` are listed in `[workspace.exclude]`. To type-check a fixture on its own:
+
+   ```bash
+   cd test-contracts/arithmetic-safe && cargo check
