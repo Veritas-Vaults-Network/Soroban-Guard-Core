@@ -50,3 +50,9 @@ Thank you for helping improve the static analyzer. This guide covers **local set
 Prefer **small, focused commits** (one logical change per commit): a single check, a doc section, or a test fixture pair. This makes review and `git bisect` straightforward. Aim for **clear commit messages** in [Conventional Commits](https://www.conventionalcommits.org/) style (`feat(checks): …`, `fix(cli): …`, `docs: …`).
 
 ---
+
+## Mini tutorial: `syn` and the AST (with code examples)
+
+The workspace enables **`syn` with the `full` feature** (see root `Cargo.toml` → `[workspace.dependencies]`) so every `Item`, `Expr`, and `Stmt` variant is available for pattern matching and visitors. **`proc-macro2`** is configured with **`span-locations`** so `expr.span().start().line` maps to a 1-based source line when parsing whole files.
+
+### Walk the crate root
