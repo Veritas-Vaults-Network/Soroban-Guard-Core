@@ -135,3 +135,10 @@ Use [`crates/checks/src/auth.rs`](crates/checks/src/auth.rs) as the canonical la
 4. **Document the rule** — Add a section to [`docs/checks.md`](docs/checks.md) (severity, patterns, false positives).
 
 5. **Unit tests** — In `my_rule.rs`, add `#[test] fn ...() -> Result<(), syn::Error>` and use `parse_file(src)?` so parse failures surface as test errors instead of panics.
+
+6. **Fixture crates** — Add `test-contracts/<rule>-vulnerable/` and `test-contracts/<rule>-safe/` (see below).
+
+---
+
+## How to write test contracts
+
