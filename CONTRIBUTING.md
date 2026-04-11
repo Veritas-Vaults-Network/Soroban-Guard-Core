@@ -76,3 +76,10 @@ fn list_struct_names(src: &str) -> Result<Vec<String>, syn::Error> {
 
 ### Visit expressions without listing every `Expr` variant
 
+Implementing [`syn::visit::Visit`](https://docs.rs/syn/latest/syn/visit/trait.Visit.html) dispatches recursively. This mirrors how `auth.rs` and `overflow.rs` detect method calls and binary operators:
+
+```rust
+use syn::visit::{self, Visit};
+use syn::{ExprBinary, ExprMethodCall, BinOp};
+
+#[derive(Default)]
