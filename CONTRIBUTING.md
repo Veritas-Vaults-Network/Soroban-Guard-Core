@@ -129,3 +129,9 @@ Use [`crates/checks/src/auth.rs`](crates/checks/src/auth.rs) as the canonical la
    - `pub mod my_rule;`
    - `pub use my_rule::MyRuleCheck;`
    - Push `Box::new(MyRuleCheck)` into `default_checks()`. Order only affects listing, not semantics.
+
+3. **Keep checks isolated** — Do **not** use shared mutable static state. Pass data through function arguments or use `util.rs` for **pure** helpers. Each `Check::run` must behave the same regardless of which other checks ran first.
+
+4. **Document the rule** — Add a section to [`docs/checks.md`](docs/checks.md) (severity, patterns, false positives).
+
+5. **Unit tests** — In `my_rule.rs`, add `#[test] fn ...() -> Result<(), syn::Error>` and use `parse_file(src)?` so parse failures surface as test errors instead of panics.
