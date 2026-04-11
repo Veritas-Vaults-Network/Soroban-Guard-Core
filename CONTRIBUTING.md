@@ -109,3 +109,9 @@ Drive the visitor with `visit::visit_file(&mut v, &file)` or `v.visit_block(&fun
 
 ### Further reading
 
+- [`syn` on docs.rs](https://docs.rs/syn/)
+- Internal rule reference: [`docs/checks.md`](docs/checks.md)
+
+---
+
+## How to add a new check (copy `auth.rs` as a template)
