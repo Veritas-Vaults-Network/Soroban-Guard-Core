@@ -161,3 +161,10 @@ Fixture crates live under **`test-contracts/`** and are **excluded** from the ro
 5. **Scanning** — `soroban-guard scan test-contracts/my-rule-vulnerable` only reads `.rs` files; building first is optional.
 
 ---
+
+## Sister repositories (3-repo ecosystem)
+
+| Project | Repository | Role |
+|---------|------------|------|
+| **Core (this repo)** | [soroban-guard-core](https://github.com/Veritas-Vaults-Network/soroban-guard-core) | CLI + `syn`-based analyzer |
+| **Web dashboard** | [Soroban-Guard-web](https://github.com/Veritas-Vaults-Network/Soroban-Guard-web) | UI for browsing and triaging findings |
