@@ -168,3 +168,9 @@ Fixture crates live under **`test-contracts/`** and are **excluded** from the ro
 |---------|------------|------|
 | **Core (this repo)** | [soroban-guard-core](https://github.com/Veritas-Vaults-Network/soroban-guard-core) | CLI + `syn`-based analyzer |
 | **Web dashboard** | [Soroban-Guard-web](https://github.com/Veritas-Vaults-Network/Soroban-Guard-web) | UI for browsing and triaging findings |
+| **Contracts** | [soroban-guard-contracts](https://github.com/Veritas-Vaults-Network/soroban-guard-contracts) | Curated Soroban examples and regression contracts |
+
+---
+
+## Architecture constraints (for contributors)
+
