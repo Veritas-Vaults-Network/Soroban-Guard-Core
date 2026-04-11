@@ -142,3 +142,9 @@ Use [`crates/checks/src/auth.rs`](crates/checks/src/auth.rs) as the canonical la
 
 ## How to write test contracts
 
+Fixture crates live under **`test-contracts/`** and are **excluded** from the root workspace so each remains a normal Soroban `cdylib` package.
+
+1. **Layout**
+
+   ```
+   test-contracts/my-rule-vulnerable/
