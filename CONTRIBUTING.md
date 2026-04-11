@@ -24,3 +24,9 @@ Thank you for helping improve the static analyzer. This guide covers **local set
    ```bash
    cargo build --workspace
    cargo test --workspace
+   ```
+
+4. **Run the CLI** against bundled fixtures:
+
+   ```bash
+   cargo run -p soroban-guard-cli -- scan test-contracts/vulnerable
