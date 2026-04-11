@@ -37,3 +37,9 @@ Thank you for helping improve the static analyzer. This guide covers **local set
 
    ```bash
    cd test-contracts/arithmetic-safe && cargo check
+   ```
+
+6. **Install the `soroban-guard` binary** (optional):
+
+   ```bash
+   cargo install --path crates/cli
