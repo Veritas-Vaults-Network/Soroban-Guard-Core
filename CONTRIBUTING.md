@@ -96,3 +96,9 @@ impl<'ast> Visit<'ast> for StorageCallCount {
         visit::visit_expr_method_call(self, i);
     }
 
+    fn visit_expr_binary(&mut self, i: &'ast ExprBinary) {
+        if matches!(i.op, BinOp::Add(_) | BinOp::Sub(_) | BinOp::Mul(_)) {
+            self.unchecked_int_ops += 1;
+        }
+        visit::visit_expr_binary(self, i);
+    }
