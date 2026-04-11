@@ -11,3 +11,9 @@ Thank you for helping improve the static analyzer. This guide covers **local set
    source "$HOME/.cargo/env"
    rustc --version
    ```
+
+2. **Clone this repository** and `cd` into the workspace root:
+
+   ```bash
+   git clone https://github.com/Veritas-Vaults-Network/soroban-guard-core.git
+   cd soroban-guard-core
