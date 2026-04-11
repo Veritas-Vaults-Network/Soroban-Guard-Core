@@ -181,3 +181,10 @@ Fixture crates live under **`test-contracts/`** and are **excluded** from the ro
 
 ---
 
+## Code style
+
+- Prefer small visitors and helpers over monolithic passes.
+- Keep `--json` output stable for scripting.
+- When you change severity or rule IDs, update `docs/checks.md` in the same change.
+
+Thank you for contributing.
