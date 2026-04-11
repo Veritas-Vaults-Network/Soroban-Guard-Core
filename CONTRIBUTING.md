@@ -83,3 +83,9 @@ use syn::visit::{self, Visit};
 use syn::{ExprBinary, ExprMethodCall, BinOp};
 
 #[derive(Default)]
+struct StorageCallCount {
+    storage_methods: usize,
+    unchecked_int_ops: usize,
+}
+
+impl<'ast> Visit<'ast> for StorageCallCount {
