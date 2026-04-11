@@ -148,3 +148,10 @@ Fixture crates live under **`test-contracts/`** and are **excluded** from the ro
 
    ```
    test-contracts/my-rule-vulnerable/
+   ├── Cargo.toml
+   └── src/lib.rs
+   ```
+
+2. **`Cargo.toml`** — Match existing samples: `soroban-sdk`, `edition = "2021"`, `[lib] crate-type = ["cdylib"]`, `publish = false`.
+
+3. **`src/lib.rs`** — Use real Soroban patterns (`#![no_std]`, `#[contract]`, `#[contractimpl]`) so `cargo check` inside the directory validates the sample.
