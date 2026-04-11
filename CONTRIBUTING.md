@@ -102,3 +102,10 @@ impl<'ast> Visit<'ast> for StorageCallCount {
         }
         visit::visit_expr_binary(self, i);
     }
+}
+```
+
+Drive the visitor with `visit::visit_file(&mut v, &file)` or `v.visit_block(&func.block)` for a single function body.
+
+### Further reading
+
