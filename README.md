@@ -1,6 +1,10 @@
 # Soroban Guard Core
 
-Static analyzer CLI for [Soroban](https://soroban.stellar.org/) smart contracts (Rust). This repository is the **core engine** in a three-repo setup:
+> Static analysis engine for [Soroban](https://soroban.stellar.org/) smart contracts — securing the Stellar blockchain, one contract at a time.
+
+Soroban Guard Core is a CLI-based static analyzer for Rust smart contracts deployed on the **Stellar network** via the Soroban smart contract platform. It detects vulnerabilities before your code ever touches the chain.
+
+This is the **core engine** in a three-repo setup:
 
 | Repo | URL |
 |------|-----|
@@ -8,9 +12,33 @@ Static analyzer CLI for [Soroban](https://soroban.stellar.org/) smart contracts 
 | **Web dashboard** | [github.com/Veritas-Vaults-Network/Soroban-Guard-web](https://github.com/Veritas-Vaults-Network/Soroban-Guard-web) |
 | **Contracts** | [github.com/Veritas-Vaults-Network/soroban-guard-contracts](https://github.com/Veritas-Vaults-Network/soroban-guard-contracts) |
 
+---
+
+## Why Soroban Guard?
+
+Soroban is Stellar's smart contract platform — a WebAssembly-based execution environment designed for speed, low cost, and predictability. But like any smart contract platform, **bugs in Soroban contracts can be exploited on-chain and are irreversible**.
+
+Soroban Guard catches common vulnerability classes at the source level, before `stellar contract deploy` ever runs.
+
+---
+
+## Stellar / Soroban Context
+
+Soroban contracts are Rust crates compiled to WASM and deployed to the Stellar network. Key security concerns this tool addresses:
+
+| Concern | Stellar/Soroban Impact |
+|---|---|
+| Missing `require_auth` | Any caller can invoke privileged contract functions |
+| Unchecked arithmetic | Integer overflow/underflow in token balances or ledger math |
+| Unprotected admin | Admin keys can be overwritten without authorization |
+| Unsafe storage patterns | Persistent/temporary ledger storage misuse |
+
+---
+
 ## Requirements
 
 - Rust 1.74+ (2021 edition)
+- No Stellar SDK or network connection required — analysis is purely static
 
 ## Build
 
@@ -20,21 +48,162 @@ cargo build --release
 
 The binary is `target/release/soroban-guard` (package `soroban-guard-cli`).
 
+---
+
 ## Usage
+
+Scan a Soroban contract crate before deploying to Stellar:
 
 ```bash
 cargo run -p soroban-guard-cli -- scan ./path/to/contract-crate
 ```
 
-Pretty-printed, colored findings on stdout; JSON with:
+Output as JSON (useful for CI pipelines or the web dashboard):
 
 ```bash
 cargo run -p soroban-guard-cli -- scan ./path/to/contract-crate --json
 ```
 
-- Exit **0**: no **High** severity findings (Medium/Low do not fail the process).
-- Exit **1**: at least one **High** finding.
-- Exit **2**: scan error (I/O or parse failure).
+### Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | No High severity findings — safe to proceed |
+| `1` | At least one High finding — **do not deploy** |
+| `2` | Scan error (I/O or parse failure) |
+
+---
+
+## Workspace Scaffold
+
+```
+Soroban-Guard-Core/
+├── Cargo.toml                  # workspace root
+├── crates/
+│   ├── cli/                    # clap entrypoint & reporting
+│   │   └── src/main.rs
+│   ├── analyzer/               # walks .rs files, parses with syn, runs checks
+│   │   └── src/lib.rs
+│   └── checks/                 # Check trait + individual detectors
+│       └── src/
+│           ├── lib.rs          # trait definition, Finding, Severity, default_checks()
+│           ├── auth.rs         # missing-require-auth
+│           ├── overflow.rs     # unchecked-arithmetic
+│           ├── admin.rs        # unprotected-admin
+│           └── storage.rs      # unsafe-storage-patterns
+└── test-contracts/             # standalone Soroban crates (excluded from workspace)
+    ├── vulnerable/             # triggers missing-require-auth
+    ├── safe/                   # passes missing-require-auth
+    ├── arithmetic-vulnerable/
+    ├── arithmetic-safe/
+    ├── admin-vulnerable/
+    ├── admin-safe/
+    ├── storage-vulnerable/
+    └── storage-safe/
+```
+
+---
+
+## Code Snippets
+
+### Vulnerable contract — triggers `missing-require-auth`
+
+```rust
+#![no_std]
+use soroban_sdk::{contract, contractimpl, symbol_short, Env, Symbol};
+
+#[contract]
+pub struct VulnerableContract;
+
+const KEY: Symbol = symbol_short!("counter");
+
+#[contractimpl]
+impl VulnerableContract {
+    // ❌ No env.require_auth() — anyone on Stellar can call this
+    pub fn bump(env: Env) {
+        let mut n: u32 = env.storage().instance().get(&KEY).unwrap_or(0);
+        n += 1;
+        env.storage().instance().set(&KEY, &n);
+    }
+}
+```
+
+### Safe contract — passes `missing-require-auth`
+
+```rust
+#![no_std]
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, Symbol};
+
+#[contract]
+pub struct SafeContract;
+
+const KEY: Symbol = symbol_short!("owner");
+
+#[contractimpl]
+impl SafeContract {
+    // ✅ Caller must be the authorized Address on Stellar
+    pub fn set_owner(env: Env, new_owner: Address) {
+        env.require_auth();
+        env.storage().instance().set(&KEY, &new_owner);
+    }
+}
+```
+
+### Adding a custom check
+
+Implement the `Check` trait in `crates/checks/src/` and register it in `default_checks()`:
+
+```rust
+use crate::{Check, Finding};
+use syn::File;
+
+pub struct MyCustomCheck;
+
+impl Check for MyCustomCheck {
+    fn name(&self) -> &str { "my-custom-check" }
+
+    fn run(&self, file: &File, source: &str) -> Vec<Finding> {
+        // inspect the syn AST and return any findings
+        vec![]
+    }
+}
+```
+
+```rust
+// crates/checks/src/lib.rs — register it here
+pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
+    vec![
+        Box::new(MissingRequireAuthCheck),
+        Box::new(UncheckedArithmeticCheck),
+        Box::new(UnprotectedAdminCheck),
+        Box::new(UnsafeStoragePatternsCheck),
+        Box::new(MyCustomCheck),   // 👈 add your check
+    ]
+}
+```
+
+---
+
+## Stellar Deployment Workflow
+
+Integrate Soroban Guard into your Stellar deployment pipeline:
+
+```bash
+# 1. Analyze before building
+cargo run -p soroban-guard-cli -- scan ./my-contract --json > findings.json
+
+# 2. Fail fast on High findings (exit code 1)
+
+# 3. Build the WASM artifact
+cargo build --target wasm32-unknown-unknown --release
+
+# 4. Deploy to Stellar Testnet
+stellar contract deploy \
+  --wasm target/wasm32-unknown-unknown/release/my_contract.wasm \
+  --network testnet
+```
+
+---
 
 ## Workspace layout
 
@@ -46,16 +215,7 @@ cargo run -p soroban-guard-cli -- scan ./path/to/contract-crate --json
 
 See [docs/checks.md](docs/checks.md) for implemented rules and [CONTRIBUTING.md](CONTRIBUTING.md) to add a check.
 
-## Test contracts
-
-Sample crates under `test-contracts/` are listed in the root workspace `exclude` list so they stay standalone Soroban packages. The CLI scans their `.rs` sources directly (no need to `cargo build` them first):
-
-| Directory | Intent |
-|-----------|--------|
-| `vulnerable` / `safe` | Phase 1 — `missing-require-auth` |
-| `arithmetic-vulnerable` / `arithmetic-safe` | Phase 2 — `unchecked-arithmetic` |
-| `admin-vulnerable` / `admin-safe` | Phase 2 — `unprotected-admin` |
-| `storage-vulnerable` / `storage-safe` | Phase 2 — `unsafe-storage-patterns` |
+---
 
 ## License
 
