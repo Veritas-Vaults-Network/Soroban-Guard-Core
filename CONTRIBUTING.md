@@ -43,3 +43,10 @@ Thank you for helping improve the static analyzer. This guide covers **local set
 
    ```bash
    cargo install --path crates/cli
+   ```
+
+### Commit hygiene
+
+Prefer **small, focused commits** (one logical change per commit): a single check, a doc section, or a test fixture pair. This makes review and `git bisect` straightforward. Aim for **clear commit messages** in [Conventional Commits](https://www.conventionalcommits.org/) style (`feat(checks): …`, `fix(cli): …`, `docs: …`).
+
+---
