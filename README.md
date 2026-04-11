@@ -1,6 +1,12 @@
 # Soroban Guard Core
 
-Static analyzer CLI for [Soroban](https://soroban.stellar.org/) smart contracts (Rust). This repository is the **core engine**; companion repos host the web dashboard and curated contracts under [Veritas-Vaults-Network](https://github.com/Veritas-Vaults-Network).
+Static analyzer CLI for [Soroban](https://soroban.stellar.org/) smart contracts (Rust). This repository is the **core engine** in a three-repo setup:
+
+| Repo | URL |
+|------|-----|
+| **Core** (this) | [github.com/Veritas-Vaults-Network/soroban-guard-core](https://github.com/Veritas-Vaults-Network/soroban-guard-core) |
+| **Web dashboard** | [github.com/Veritas-Vaults-Network/Soroban-Guard-web](https://github.com/Veritas-Vaults-Network/Soroban-Guard-web) |
+| **Contracts** | [github.com/Veritas-Vaults-Network/soroban-guard-contracts](https://github.com/Veritas-Vaults-Network/soroban-guard-contracts) |
 
 ## Requirements
 
@@ -39,6 +45,17 @@ cargo run -p soroban-guard-cli -- scan ./path/to/contract-crate --json
 | `crates/checks` | `Check` trait + individual detectors |
 
 See [docs/checks.md](docs/checks.md) for implemented rules and [CONTRIBUTING.md](CONTRIBUTING.md) to add a check.
+
+## Test contracts
+
+Sample crates under `test-contracts/` are listed in the root workspace `exclude` list so they stay standalone Soroban packages. The CLI scans their `.rs` sources directly (no need to `cargo build` them first):
+
+| Directory | Intent |
+|-----------|--------|
+| `vulnerable` / `safe` | Phase 1 — `missing-require-auth` |
+| `arithmetic-vulnerable` / `arithmetic-safe` | Phase 2 — `unchecked-arithmetic` |
+| `admin-vulnerable` / `admin-safe` | Phase 2 — `unprotected-admin` |
+| `storage-vulnerable` / `storage-safe` | Phase 2 — `unsafe-storage-patterns` |
 
 ## License
 

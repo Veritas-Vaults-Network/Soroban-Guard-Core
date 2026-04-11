@@ -1,9 +1,10 @@
 //! Missing `env.require_auth()` before storage writes in `#[contractimpl]` methods.
 
+use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Block, Expr, ExprMethodCall, File, ImplItem, Item, ItemImpl};
+use syn::{Block, Expr, ExprMethodCall, File};
 
 const CHECK_NAME: &str = "missing-require-auth";
 
@@ -18,56 +19,31 @@ impl Check for MissingRequireAuthCheck {
 
     fn run(&self, file: &File, _source: &str) -> Vec<Finding> {
         let mut out = Vec::new();
-        for item in &file.items {
-            let Item::Impl(item_impl) = item else {
-                continue;
-            };
-            if !is_contractimpl(item_impl) {
+        for method in contractimpl_functions(file) {
+            let mut scan = FuncBodyScan::default();
+            scan.visit_block(&method.block);
+            if !scan.storage_write || scan.env_require_auth {
                 continue;
             }
-            for impl_item in &item_impl.items {
-                let ImplItem::Fn(method) = impl_item else {
-                    continue;
-                };
-                let mut scan = FuncBodyScan::default();
-                scan.visit_block(&method.block);
-                if !scan.storage_write || scan.env_require_auth {
-                    continue;
-                }
-                let line = first_storage_write_line(&method.block).unwrap_or_else(|| {
-                    method.sig.ident.span().start().line
-                });
-                let fn_name = method.sig.ident.to_string();
-                out.push(Finding {
-                    check_name: CHECK_NAME.to_string(),
-                    severity: Severity::High,
-                    file_path: String::new(),
-                    line,
-                    function_name: fn_name.clone(),
-                    description: format!(
-                        "Method `{fn_name}` writes to `env.storage()` but does not call \
-                         `env.require_auth()`. Callers may mutate contract state without proving \
-                         they are authorized."
-                    ),
-                });
-            }
+            let line = first_storage_write_line(&method.block).unwrap_or_else(|| {
+                method.sig.ident.span().start().line
+            });
+            let fn_name = method.sig.ident.to_string();
+            out.push(Finding {
+                check_name: CHECK_NAME.to_string(),
+                severity: Severity::High,
+                file_path: String::new(),
+                line,
+                function_name: fn_name.clone(),
+                description: format!(
+                    "Method `{fn_name}` writes to `env.storage()` but does not call \
+                     `env.require_auth()`. Callers may mutate contract state without proving \
+                     they are authorized."
+                ),
+            });
         }
         out
     }
-}
-
-fn is_contractimpl(item_impl: &ItemImpl) -> bool {
-    item_impl
-        .attrs
-        .iter()
-        .any(|attr| path_is_contractimpl(attr.path()))
-}
-
-fn path_is_contractimpl(path: &syn::Path) -> bool {
-    path
-        .segments
-        .last()
-        .is_some_and(|s| s.ident == "contractimpl")
 }
 
 fn receiver_chain_contains_storage(expr: &Expr) -> bool {
@@ -147,13 +123,13 @@ mod tests {
     use crate::Check;
     use syn::parse_file;
 
-    fn run_on_src(src: &str) -> Vec<Finding> {
-        let file = parse_file(src).unwrap();
-        MissingRequireAuthCheck.run(&file, src)
+    fn run_on_src(src: &str) -> Result<Vec<Finding>, syn::Error> {
+        let file = parse_file(src)?;
+        Ok(MissingRequireAuthCheck.run(&file, src))
     }
 
     #[test]
-    fn flags_persistent_set_without_env_require_auth() {
+    fn flags_persistent_set_without_env_require_auth() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
@@ -167,15 +143,16 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].function_name, "set_balance");
         assert_eq!(hits[0].severity, Severity::High);
         assert_eq!(hits[0].check_name, CHECK_NAME);
+        Ok(())
     }
 
     #[test]
-    fn passes_when_env_require_auth_present() {
+    fn passes_when_env_require_auth_present() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{contractimpl, Address, Env, Symbol};
@@ -190,12 +167,13 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert!(hits.is_empty());
+        Ok(())
     }
 
     #[test]
-    fn still_flags_when_only_address_require_auth() {
+    fn still_flags_when_only_address_require_auth() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{contractimpl, Address, Env, Symbol};
@@ -210,16 +188,17 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert_eq!(
             hits.len(),
             1,
             "`user.require_auth()` is not `env.require_auth()` per this check"
         );
+        Ok(())
     }
 
     #[test]
-    fn still_flags_when_env_require_auth_for_args_only() {
+    fn still_flags_when_env_require_auth_for_args_only() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{contractimpl, Address, Env, Symbol};
@@ -234,12 +213,13 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert_eq!(hits.len(), 1);
+        Ok(())
     }
 
     #[test]
-    fn recognizes_soroban_sdk_contractimpl_path() {
+    fn recognizes_soroban_sdk_contractimpl_path() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
@@ -253,13 +233,14 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].function_name, "bad");
+        Ok(())
     }
 
     #[test]
-    fn ignores_non_contractimpl_impl() {
+    fn ignores_non_contractimpl_impl() -> Result<(), syn::Error> {
         let hits = run_on_src(
             r#"
 use soroban_sdk::{Env, Symbol};
@@ -272,7 +253,8 @@ impl Contract {
     }
 }
 "#,
-        );
+        )?;
         assert!(hits.is_empty());
+        Ok(())
     }
 }

@@ -1,4 +1,7 @@
 //! Walk Rust sources, parse with `syn`, and run all registered checks.
+//!
+//! Each [`Check`](soroban_guard_checks::Check) runs independently on the same parsed file;
+//! findings are concatenated with **no shared mutable state** between checks.
 
 use soroban_guard_checks::{default_checks, Finding};
 use std::path::{Path, PathBuf};

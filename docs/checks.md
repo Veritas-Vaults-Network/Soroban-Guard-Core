@@ -6,45 +6,90 @@ This document describes what each Soroban Guard Core check looks for and why it 
 
 ## `missing-require-auth` (High)
 
-**Status:** implemented (Phase 1)
+**Status:** Phase 1
 
 **What it detects**
 
 In an `impl` block marked with `#[contractimpl]` or `#[soroban_sdk::contractimpl]`, any function whose body:
 
 1. Performs a storage mutation through `env.storage()` (heuristic: method calls `set`, `remove`, `extend_ttl`, `bump`, or `append` on a receiver chain that includes `.storage()`), and  
-2. Never calls `env.require_auth()` (literal parameter name **`env`**: `env.require_auth()`).
+2. Never calls `env.require_auth()` (parameter name **`env`**: `env.require_auth()`).
 
 **Why it matters**
 
-Contract state updates should be gated so only authorized accounts invoke them. Missing `env.require_auth()` on the Soroban `Env` means the scanner cannot see an explicit env-level auth check before writes (note: `user.require_auth()` on an `Address` is **not** treated as `env.require_auth()` for this rule).
+Contract state updates should be gated. This rule only recognizes `env.require_auth()`, not `user.require_auth()` or `env.require_auth_for_args()`.
 
 **Limitations**
 
-- Only recognizes the `Env` binding named `env`. If you rename it (e.g. `e.require_auth()`), the check may false-positive.
-- `env.require_auth_for_args(...)` is **not** counted as satisfying this rule (only `env.require_auth()`).
-- Static analysis cannot prove auth happens indirectly through helpers without inlining heuristics.
+- Only the `Env` binding named `env` counts.
+- Static analysis cannot see auth hidden in helpers.
+
+**Fixture:** `test-contracts/vulnerable/`, `test-contracts/safe/`
 
 ---
 
 ## `unchecked-arithmetic` (Medium)
 
-**Status:** placeholder (no findings yet)
+**Status:** Phase 2
 
-Reserved for unchecked wrapping arithmetic (`+`, `-`, `*`, etc.) on Soroban token amounts and similar.
+**What it detects**
+
+Inside `#[contractimpl]` methods:
+
+- Binary `+`, `-`, `*` where **both** sides are not integer/string literals (so `1 + 2` is ignored, `a + b` is flagged).
+- Compound `+=`, `-=`, `*=` (syn 2 represents these as `ExprBinary` with `AddAssign` / `SubAssign` / `MulAssign`).
+
+**Why it matters**
+
+Wrapping arithmetic on `i128` / `u128` amounts can silently overflow. Prefer `checked_*` or `saturating_*` for token math.
+
+**Limitations**
+
+- May flag harmless loop indices; review context.
+- Does not analyze types; it is syntactic.
+
+**Fixture:** `test-contracts/arithmetic-vulnerable/`, `test-contracts/arithmetic-safe/`
 
 ---
 
-## `unprotected-admin` (Medium)
+## `unprotected-admin` (High)
 
-**Status:** placeholder (no findings yet)
+**Status:** Phase 2
 
-Reserved for privileged operations (pause, upgrade, role changes) without access control patterns.
+**What it detects**
+
+Public (`pub fn`) methods in `#[contractimpl]` whose name **exactly matches** a built-in list of sensitive entrypoints (e.g. `set_owner`, `pause`, `migrate`, `upgrade`, … — see `SENSITIVE_NAMES` in `crates/checks/src/admin.rs`), and whose body contains **no** call to `require_auth` or `require_auth_for_args` on any receiver.
+
+**Why it matters**
+
+Names like `set_owner` strongly suggest privilege; without any auth call the scanner treats the entrypoint as world-callable.
+
+**Limitations**
+
+- Name allowlist only; extend the list as your org sees fit.
+- Any `require_auth` / `require_auth_for_args` anywhere in the body clears the finding (no dataflow).
+
+**Fixture:** `test-contracts/admin-vulnerable/`, `test-contracts/admin-safe/`
 
 ---
 
-## `unsafe-storage-patterns` (Low)
+## `unsafe-storage-patterns` (Medium)
 
-**Status:** placeholder (no findings yet)
+**Status:** Phase 2
 
-Reserved for risky key design, mixing instance vs persistent storage, or other storage footguns.
+**What it detects**
+
+1. **Temporary storage writes** — `env.storage().temporary()` in the receiver chain of a storage mutation (`set`, `remove`, `extend_ttl`, `bump`, `append`).
+2. **Dynamic `Symbol::new` keys** — `Symbol::new(&env, …)` where the second argument is **not** a string literal (e.g. derived from a parameter). Literal second args like `Symbol::new(&env, "fixed")` are ignored.
+
+**Why it matters**
+
+- Temporary data expires with TTL; it is easy to misuse for long-lived balances or ownership.
+- Caller-derived symbol strings are easier to enumerate or collide than fixed `symbol_short!` keys.
+
+**Limitations**
+
+- Does not analyze `symbol_short!(...)` macros beyond normal parsing.
+- `Symbol::new` with a `const` or macro-expanded literal may still be flagged if it is not a `syn::Lit::Str`.
+
+**Fixture:** `test-contracts/storage-vulnerable/`, `test-contracts/storage-safe/`

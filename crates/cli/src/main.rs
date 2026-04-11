@@ -33,7 +33,10 @@ fn main() {
         Commands::Scan { path, json } => match scan_directory(&path) {
             Ok(findings) => {
                 if json {
-                    print_json(&findings);
+                    if let Err(e) = print_json(&findings) {
+                        eprintln!("{} {}", "error:".red().bold(), e);
+                        std::process::exit(2);
+                    }
                 } else {
                     print_pretty(&findings, path.display().to_string());
                 }
@@ -52,15 +55,14 @@ fn main() {
     }
 }
 
-fn print_json(findings: &[Finding]) {
+fn print_json(findings: &[Finding]) -> Result<(), serde_json::Error> {
     #[derive(serde::Serialize)]
     struct Out<'a> {
         findings: &'a [Finding],
     }
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&Out { findings }).expect("serialize findings")
-    );
+    let json = serde_json::to_string_pretty(&Out { findings })?;
+    println!("{json}");
+    Ok(())
 }
 
 fn print_pretty(findings: &[Finding], root_label: String) {
