@@ -56,3 +56,10 @@ Prefer **small, focused commits** (one logical change per commit): a single chec
 The workspace enables **`syn` with the `full` feature** (see root `Cargo.toml` → `[workspace.dependencies]`) so every `Item`, `Expr`, and `Stmt` variant is available for pattern matching and visitors. **`proc-macro2`** is configured with **`span-locations`** so `expr.span().start().line` maps to a 1-based source line when parsing whole files.
 
 ### Walk the crate root
+
+`syn::parse_file` returns a `syn::File`. Its `items` slice holds top-level declarations (`use`, `struct`, `impl`, …):
+
+```rust
+use syn::{parse_file, Item};
+
+fn list_struct_names(src: &str) -> Result<Vec<String>, syn::Error> {
