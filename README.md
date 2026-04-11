@@ -4,7 +4,7 @@ Static analyzer CLI for [Soroban](https://soroban.stellar.org/) smart contracts 
 
 | Repo | URL |
 |------|-----|
-| **Core** (this) | [github.com/Veritas-Vaults-Network/soroban-guard-core](https://github.com/Veritas-Vaults-Network/soroban-guard-core) |
+| **Core** (this) | [github.com/Veritas-Vaults-Network/soroban-guard-core](https://github.com/Veritas-Vaults-Network/Soroban-Guard-Core) |
 | **Web dashboard** | [github.com/Veritas-Vaults-Network/Soroban-Guard-web](https://github.com/Veritas-Vaults-Network/Soroban-Guard-web) |
 | **Contracts** | [github.com/Veritas-Vaults-Network/soroban-guard-contracts](https://github.com/Veritas-Vaults-Network/soroban-guard-contracts) |
 
