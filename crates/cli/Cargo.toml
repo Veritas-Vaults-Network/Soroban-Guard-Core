@@ -1,0 +1,18 @@
+[package]
+name = "soroban-guard-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI for Soroban Guard smart contract scanner"
+
+[[bin]]
+name = "soroban-guard"
+path = "src/main.rs"
+
+[dependencies]
+soroban-guard-analyzer = { path = "../analyzer" }
+soroban-guard-checks = { path = "../checks" }
+clap.workspace = true
+colored.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true

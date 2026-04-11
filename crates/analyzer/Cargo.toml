@@ -1,0 +1,13 @@
+[package]
+name = "soroban-guard-analyzer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "AST walking and check orchestration for Soroban Guard"
+
+[dependencies]
+soroban-guard-checks = { path = "../checks" }
+syn.workspace = true
+serde.workspace = true
+walkdir.workspace = true
+thiserror.workspace = true

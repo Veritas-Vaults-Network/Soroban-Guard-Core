@@ -1,0 +1,11 @@
+[package]
+name = "soroban-guard-checks"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Vulnerability detectors for Soroban Guard"
+
+[dependencies]
+syn.workspace = true
+proc-macro2.workspace = true
+serde.workspace = true
