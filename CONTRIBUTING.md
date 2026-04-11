@@ -115,3 +115,10 @@ Drive the visitor with `visit::visit_file(&mut v, &file)` or `v.visit_block(&fun
 ---
 
 ## How to add a new check (copy `auth.rs` as a template)
+
+Use [`crates/checks/src/auth.rs`](crates/checks/src/auth.rs) as the canonical layout: a `const CHECK_NAME`, a unit struct, `impl Check`, private helpers, and a `#[cfg(test)]` module using `syn::parse_file` with `Result`-returning tests.
+
+### Step-by-step
+
+1. **Copy the file** — `cp crates/checks/src/auth.rs crates/checks/src/my_rule.rs` and rename:
+   - `CHECK_NAME` → your stable rule id (e.g. `"my-rule"`).
