@@ -174,3 +174,10 @@ Fixture crates live under **`test-contracts/`** and are **excluded** from the ro
 
 ## Architecture constraints (for contributors)
 
+- **`syn` `full`** — New crates in this workspace should inherit workspace `syn` with `features = ["full", "visit"]` unless there is a strong reason not to.
+- **No `todo!()`** — Land complete logic; placeholders block merge.
+- **No panics in library / CLI paths** — Propagate or handle `Result` (the CLI uses exit code **2** for report serialization failures and scan errors).
+- **Checks stay isolated** — Stateless `run` implementations; no reliance on execution order or global mutable state.
+
+---
+
