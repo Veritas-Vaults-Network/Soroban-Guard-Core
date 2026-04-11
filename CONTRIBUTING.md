@@ -70,3 +70,9 @@ fn list_struct_names(src: &str) -> Result<Vec<String>, syn::Error> {
             names.push(s.ident.to_string());
         }
     }
+    Ok(names)
+}
+```
+
+### Visit expressions without listing every `Expr` variant
+
