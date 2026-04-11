@@ -122,3 +122,10 @@ Use [`crates/checks/src/auth.rs`](crates/checks/src/auth.rs) as the canonical la
 
 1. **Copy the file** — `cp crates/checks/src/auth.rs crates/checks/src/my_rule.rs` and rename:
    - `CHECK_NAME` → your stable rule id (e.g. `"my-rule"`).
+   - `MissingRequireAuthCheck` → `MyRuleCheck`.
+   - Replace `run` with your AST logic; keep `Finding { file_path: String::new(), ... }` (the analyzer fills paths).
+
+2. **Register the module** — In [`crates/checks/src/lib.rs`](crates/checks/src/lib.rs):
+   - `pub mod my_rule;`
+   - `pub use my_rule::MyRuleCheck;`
+   - Push `Box::new(MyRuleCheck)` into `default_checks()`. Order only affects listing, not semantics.
