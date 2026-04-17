@@ -27,12 +27,10 @@ pub fn scan_directory(root: &Path) -> Result<Vec<Finding>, ScanError> {
             continue;
         }
         let path = entry.path();
-        if path.components().any(|c| {
-            matches!(
-                c.as_os_str().to_str(),
-                Some("target" | ".git")
-            )
-        }) {
+        if path
+            .components()
+            .any(|c| matches!(c.as_os_str().to_str(), Some("target" | ".git")))
+        {
             continue;
         }
         if path.extension().and_then(|s| s.to_str()) != Some("rs") {

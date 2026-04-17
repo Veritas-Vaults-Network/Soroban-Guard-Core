@@ -25,9 +25,8 @@ impl Check for MissingRequireAuthCheck {
             if !scan.storage_write || scan.env_require_auth {
                 continue;
             }
-            let line = first_storage_write_line(&method.block).unwrap_or_else(|| {
-                method.sig.ident.span().start().line
-            });
+            let line = first_storage_write_line(&method.block)
+                .unwrap_or_else(|| method.sig.ident.span().start().line);
             let fn_name = method.sig.ident.to_string();
             out.push(Finding {
                 check_name: CHECK_NAME.to_string(),

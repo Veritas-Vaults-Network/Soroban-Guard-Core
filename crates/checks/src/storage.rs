@@ -77,9 +77,7 @@ fn is_symbol_new_path(expr: &Expr) -> bool {
         return false;
     };
     let segs = &p.path.segments;
-    segs.len() == 2
-        && segs[0].ident == "Symbol"
-        && segs[1].ident == "new"
+    segs.len() == 2 && segs[0].ident == "Symbol" && segs[1].ident == "new"
 }
 
 /// Second argument to `Symbol::new` is a string literal → stable key, no finding.
