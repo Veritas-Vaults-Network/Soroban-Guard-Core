@@ -2,14 +2,22 @@
 
 pub mod admin;
 pub mod auth;
+pub mod contracttype;
 pub mod overflow;
+pub mod panic_usage;
 pub mod storage;
+pub mod unbounded_storage;
+pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use contracttype::MissingContracttypeCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use panic_usage::PanicUsageCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use unbounded_storage::UnboundedStorageCheck;
+pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -51,5 +59,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(PanicUsageCheck),
+        Box::new(MissingContracttypeCheck),
+        Box::new(UnboundedStorageCheck),
+        Box::new(ZeroAmountCheck),
     ]
 }
