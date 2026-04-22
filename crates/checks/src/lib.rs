@@ -1,22 +1,30 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_in_temp;
 pub mod auth;
+pub mod burn_auth;
 pub mod contracttype;
+pub mod missing_contractimpl;
 pub mod overflow;
 pub mod panic_usage;
 pub mod storage;
 pub mod unbounded_storage;
+pub mod upgrade_auth;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use missing_contractimpl::MissingContractimplCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
+pub use upgrade_auth::UpgradeAuthCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -63,5 +71,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(AdminInTempCheck),
+        Box::new(BurnAuthCheck),
+        Box::new(UpgradeAuthCheck),
+        Box::new(MissingContractimplCheck),
     ]
 }
