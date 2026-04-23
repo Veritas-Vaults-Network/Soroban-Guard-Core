@@ -70,6 +70,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingRequireAuthCheck),
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
+        Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
