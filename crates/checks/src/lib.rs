@@ -1,30 +1,36 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_in_temp;
 pub mod auth;
-pub mod auth_after_write;
+pub mod burn_auth;
 pub mod contracttype;
-pub mod negative_balance;
+pub mod float_arithmetic;
+pub mod no_std;
 pub mod overflow;
 pub mod panic_usage;
-pub mod persistent_set_in_loop;
+pub mod self_transfer;
 pub mod storage;
+pub mod ttl_arg_order;
 pub mod unbounded_storage;
-pub mod upload_wasm_auth;
+pub mod weak_randomness;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
-pub use auth_after_write::AuthAfterWriteCheck;
+pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
-pub use negative_balance::NegativeBalanceCheck;
+pub use float_arithmetic::FloatArithmeticCheck;
+pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
-pub use persistent_set_in_loop::PersistentSetInLoopCheck;
+pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
-pub use upload_wasm_auth::UploadWasmAuthCheck;
+pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -66,14 +72,15 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingRequireAuthCheck),
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
+        Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
-        Box::new(PersistentSetInLoopCheck),
-        Box::new(AuthAfterWriteCheck),
-        Box::new(UploadWasmAuthCheck),
-        Box::new(NegativeBalanceCheck),
+        Box::new(SelfTransferCheck),
+        Box::new(NoStdCheck),
+        Box::new(FloatArithmeticCheck),
+        Box::new(WeakRandomnessCheck),
     ]
 }
