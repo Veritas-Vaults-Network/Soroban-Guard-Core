@@ -89,7 +89,7 @@ fn has_contracttype_attr<T: HasAttrs>(item: &T) -> bool {
         // #[derive(...contracttype...)]
         if attr.path().is_ident("derive") {
             if let syn::Meta::List(meta_list) = &attr.meta {
-                if meta_list.input.to_string().contains("contracttype") {
+                if meta_list.tokens.to_string().contains("contracttype") {
                     return true;
                 }
             }
