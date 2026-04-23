@@ -1,30 +1,36 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_in_temp;
 pub mod auth;
+pub mod burn_auth;
 pub mod contracttype;
-pub mod event_data_leak;
-pub mod invoke_return;
+pub mod float_arithmetic;
+pub mod no_std;
 pub mod overflow;
 pub mod panic_usage;
-pub mod remove_without_has;
+pub mod self_transfer;
 pub mod storage;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
+pub mod weak_randomness;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
-pub use event_data_leak::EventDataLeakCheck;
-pub use invoke_return::InvokeReturnCheck;
+pub use float_arithmetic::FloatArithmeticCheck;
+pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
-pub use remove_without_has::RemoveWithoutHasCheck;
+pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
+pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -66,14 +72,15 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingRequireAuthCheck),
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
+        Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
-        Box::new(InvokeReturnCheck),
-        Box::new(TtlArgOrderCheck),
-        Box::new(EventDataLeakCheck),
-        Box::new(RemoveWithoutHasCheck),
+        Box::new(SelfTransferCheck),
+        Box::new(NoStdCheck),
+        Box::new(FloatArithmeticCheck),
+        Box::new(WeakRandomnessCheck),
     ]
 }
