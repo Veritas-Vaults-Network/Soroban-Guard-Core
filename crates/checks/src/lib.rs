@@ -5,12 +5,14 @@ pub mod admin_in_temp;
 pub mod auth;
 pub mod burn_auth;
 pub mod contracttype;
-pub mod missing_contractimpl;
+pub mod float_arithmetic;
+pub mod no_std;
 pub mod overflow;
 pub mod panic_usage;
+pub mod self_transfer;
 pub mod storage;
 pub mod unbounded_storage;
-pub mod upgrade_auth;
+pub mod weak_randomness;
 pub mod zero_amount;
 mod util;
 
@@ -19,12 +21,14 @@ pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
-pub use missing_contractimpl::MissingContractimplCheck;
+pub use float_arithmetic::FloatArithmeticCheck;
+pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
-pub use upgrade_auth::UpgradeAuthCheck;
+pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -71,9 +75,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
-        Box::new(AdminInTempCheck),
-        Box::new(BurnAuthCheck),
-        Box::new(UpgradeAuthCheck),
-        Box::new(MissingContractimplCheck),
+        Box::new(SelfTransferCheck),
+        Box::new(NoStdCheck),
+        Box::new(FloatArithmeticCheck),
+        Box::new(WeakRandomnessCheck),
     ]
 }
