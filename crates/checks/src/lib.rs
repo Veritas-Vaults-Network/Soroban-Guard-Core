@@ -3,9 +3,13 @@
 pub mod admin;
 pub mod auth;
 pub mod contracttype;
+pub mod event_data_leak;
+pub mod invoke_return;
 pub mod overflow;
 pub mod panic_usage;
+pub mod remove_without_has;
 pub mod storage;
+pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod zero_amount;
 mod util;
@@ -13,9 +17,13 @@ mod util;
 pub use admin::UnprotectedAdminCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use event_data_leak::EventDataLeakCheck;
+pub use invoke_return::InvokeReturnCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use remove_without_has::RemoveWithoutHasCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use zero_amount::ZeroAmountCheck;
 
@@ -63,5 +71,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(InvokeReturnCheck),
+        Box::new(TtlArgOrderCheck),
+        Box::new(EventDataLeakCheck),
+        Box::new(RemoveWithoutHasCheck),
     ]
 }
