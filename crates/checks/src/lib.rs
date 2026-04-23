@@ -1,30 +1,34 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
-pub mod alloc_in_loop;
+pub mod admin_in_temp;
 pub mod auth;
+pub mod burn_auth;
 pub mod contracttype;
-pub mod deploy_address_lost;
-pub mod missing_contract_attr;
+pub mod float_arithmetic;
+pub mod no_std;
 pub mod overflow;
 pub mod panic_usage;
+pub mod self_transfer;
 pub mod storage;
 pub mod unbounded_storage;
-pub mod weak_commitment;
+pub mod weak_randomness;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
-pub use alloc_in_loop::AllocInLoopCheck;
+pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
-pub use deploy_address_lost::DeployAddressLostCheck;
-pub use missing_contract_attr::MissingContractAttrCheck;
+pub use float_arithmetic::FloatArithmeticCheck;
+pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
-pub use weak_commitment::WeakCommitmentCheck;
+pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -71,9 +75,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
-        Box::new(MissingContractAttrCheck),
-        Box::new(AllocInLoopCheck),
-        Box::new(DeployAddressLostCheck),
-        Box::new(WeakCommitmentCheck),
+        Box::new(SelfTransferCheck),
+        Box::new(NoStdCheck),
+        Box::new(FloatArithmeticCheck),
+        Box::new(WeakRandomnessCheck),
     ]
 }
