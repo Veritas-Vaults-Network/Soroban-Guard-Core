@@ -1,23 +1,43 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_in_temp;
+pub mod admin_overwrite;
 pub mod auth;
-pub mod div_before_mul;
-pub mod events;
-pub mod hardcoded_address;
+pub mod burn_auth;
+pub mod contracttype;
+pub mod float_arithmetic;
+pub mod missing_ttl;
+pub mod no_std;
 pub mod overflow;
+pub mod panic_usage;
+pub mod reentrancy;
+pub mod self_transfer;
 pub mod storage;
-pub mod storage_unwrap;
+pub mod ttl_arg_order;
+pub mod unbounded_storage;
+pub mod weak_randomness;
+pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_in_temp::AdminInTempCheck;
+pub use admin_overwrite::AdminOverwriteCheck;
 pub use auth::MissingRequireAuthCheck;
-pub use div_before_mul::DivBeforeMulCheck;
-pub use events::MissingEventsCheck;
-pub use hardcoded_address::HardcodedAddressCheck;
+pub use burn_auth::BurnAuthCheck;
+pub use contracttype::MissingContracttypeCheck;
+pub use float_arithmetic::FloatArithmeticCheck;
+pub use missing_ttl::MissingTtlExtensionCheck;
+pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use panic_usage::PanicUsageCheck;
+pub use reentrancy::ReentrancyCheck;
+pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
-pub use storage_unwrap::StorageUnwrapCheck;
+pub use ttl_arg_order::TtlArgOrderCheck;
+pub use unbounded_storage::UnboundedStorageCheck;
+pub use weak_randomness::WeakRandomnessCheck;
+pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -58,10 +78,16 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingRequireAuthCheck),
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
+        Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
-        Box::new(MissingEventsCheck),
-        Box::new(DivBeforeMulCheck),
-        Box::new(StorageUnwrapCheck),
-        Box::new(HardcodedAddressCheck),
+        Box::new(PanicUsageCheck),
+        Box::new(MissingContracttypeCheck),
+        Box::new(UnboundedStorageCheck),
+        Box::new(ZeroAmountCheck),
+        Box::new(SelfTransferCheck),
+        Box::new(NoStdCheck),
+        Box::new(FloatArithmeticCheck),
+        Box::new(WeakRandomnessCheck),
+        Box::new(ReentrancyCheck),
     ]
 }
