@@ -2,21 +2,29 @@
 
 pub mod admin;
 pub mod auth;
+pub mod auth_after_write;
 pub mod contracttype;
+pub mod negative_balance;
 pub mod overflow;
 pub mod panic_usage;
+pub mod persistent_set_in_loop;
 pub mod storage;
 pub mod unbounded_storage;
+pub mod upload_wasm_auth;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use auth_after_write::AuthAfterWriteCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use negative_balance::NegativeBalanceCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use persistent_set_in_loop::PersistentSetInLoopCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
+pub use upload_wasm_auth::UploadWasmAuthCheck;
 pub use zero_amount::ZeroAmountCheck;
 
 use serde::Serialize;
@@ -63,5 +71,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(PersistentSetInLoopCheck),
+        Box::new(AuthAfterWriteCheck),
+        Box::new(UploadWasmAuthCheck),
+        Box::new(NegativeBalanceCheck),
     ]
 }
