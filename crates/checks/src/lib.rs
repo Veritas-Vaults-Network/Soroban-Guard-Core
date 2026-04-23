@@ -2,14 +2,22 @@
 
 pub mod admin;
 pub mod auth;
+pub mod div_before_mul;
+pub mod events;
+pub mod hardcoded_address;
 pub mod overflow;
 pub mod storage;
+pub mod storage_unwrap;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use div_before_mul::DivBeforeMulCheck;
+pub use events::MissingEventsCheck;
+pub use hardcoded_address::HardcodedAddressCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use storage_unwrap::StorageUnwrapCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -51,5 +59,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(MissingEventsCheck),
+        Box::new(DivBeforeMulCheck),
+        Box::new(StorageUnwrapCheck),
+        Box::new(HardcodedAddressCheck),
     ]
 }
