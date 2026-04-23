@@ -1,7 +1,9 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_in_temp;
 pub mod auth;
+pub mod burn_auth;
 pub mod contracttype;
 pub mod float_arithmetic;
 pub mod no_std;
@@ -15,7 +17,9 @@ pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_in_temp::AdminInTempCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use burn_auth::BurnAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use no_std::NoStdCheck;
