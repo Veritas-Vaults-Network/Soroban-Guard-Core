@@ -6,3 +6,7 @@ web/.next
 web/out
 test-contracts/**/target
 test-contracts/**/Cargo.lock
+
+# Test snapshots
+**/*.snap
+**/__snapshots__/
