@@ -89,6 +89,5 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
-        Box::new(MissingTtlExtensionCheck),
     ]
 }

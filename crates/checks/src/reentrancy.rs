@@ -123,6 +123,20 @@ impl C {
     }
 
     #[test]
+    fn passes_no_invoke() {
+        let hits = run(r#"
+pub struct C;
+#[contractimpl]
+impl C {
+    pub fn store(env: Env, val: i128) {
+        env.storage().persistent().set(&KEY, &val);
+    }
+}
+"#);
+        assert!(hits.is_empty());
+    }
+
+    #[test]
     fn ignores_non_contractimpl() {
         let hits = run(r#"
 pub struct C;
