@@ -1,21 +1,29 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod amount_type;
 pub mod auth;
+pub mod contract_addr_in_loop;
 pub mod contracttype;
+pub mod mixed_storage_tiers;
 pub mod overflow;
 pub mod panic_usage;
 pub mod storage;
+pub mod symbol_short_len;
 pub mod unbounded_storage;
 pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use amount_type::AmountTypeCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use contract_addr_in_loop::ContractAddrInLoopCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use mixed_storage_tiers::MixedStorageTiersCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use symbol_short_len::SymbolShortLenCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use zero_amount::ZeroAmountCheck;
 
@@ -63,5 +71,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(MixedStorageTiersCheck),
+        Box::new(AmountTypeCheck),
+        Box::new(SymbolShortLenCheck),
+        Box::new(ContractAddrInLoopCheck),
     ]
 }
