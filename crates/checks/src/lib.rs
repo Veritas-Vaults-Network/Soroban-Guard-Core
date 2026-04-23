@@ -1,8 +1,12 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
 pub mod admin;
+pub mod admin_overwrite;
+pub mod allowance_clear;
 pub mod auth;
 pub mod contracttype;
+pub mod instance_get_guard;
+pub mod instance_per_user;
 pub mod overflow;
 pub mod panic_usage;
 pub mod storage;
@@ -11,8 +15,12 @@ pub mod zero_amount;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
+pub use admin_overwrite::AdminOverwriteCheck;
+pub use allowance_clear::AllowanceClearCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use instance_get_guard::InstanceGetGuardCheck;
+pub use instance_per_user::InstancePerUserCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use storage::UnsafeStoragePatternsCheck;
@@ -58,10 +66,14 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingRequireAuthCheck),
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
+        Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(InstanceGetGuardCheck),
+        Box::new(AllowanceClearCheck),
+        Box::new(InstancePerUserCheck),
     ]
 }
