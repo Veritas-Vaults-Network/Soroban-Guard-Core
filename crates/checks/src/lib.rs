@@ -11,6 +11,7 @@ pub mod float_arithmetic;
 pub mod missing_ttl;
 pub mod no_std;
 pub mod env_in_struct;
+pub mod sequence_as_key;
 pub mod overflow;
 pub mod panic_usage;
 pub mod reentrancy;
@@ -33,6 +34,7 @@ pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
+pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
@@ -91,6 +93,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
         Box::new(SelfTransferCheck),
+        Box::new(SequenceAsKeyCheck),
         Box::new(NoStdCheck),
         Box::new(EnvInStructCheck),
         Box::new(FloatArithmeticCheck),
