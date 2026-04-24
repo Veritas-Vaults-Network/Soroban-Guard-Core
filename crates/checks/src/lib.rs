@@ -5,6 +5,7 @@ pub mod admin_in_temp;
 pub mod admin_overwrite;
 pub mod auth;
 pub mod burn_auth;
+pub mod mint_auth;
 pub mod contracttype;
 pub mod float_arithmetic;
 pub mod missing_ttl;
@@ -26,6 +27,7 @@ pub use admin_in_temp::AdminInTempCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
+pub use mint_auth::MintAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use missing_ttl::MissingTtlExtensionCheck;
@@ -92,5 +94,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
+        Box::new(MintAuthCheck),
     ]
 }
