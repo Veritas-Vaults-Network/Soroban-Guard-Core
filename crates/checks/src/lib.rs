@@ -22,6 +22,7 @@ pub mod unbounded_storage;
 pub mod weak_randomness;
 pub mod token_transfer_unchecked;
 pub mod zero_amount;
+pub mod unvalidated_invoke_target;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -31,6 +32,7 @@ pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use mint_auth::MintAuthCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
+pub use unvalidated_invoke_target::UnvalidatedInvokeTargetCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use instance_ttl::InstanceTtlCheck;
@@ -89,6 +91,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(CurrentContractUnwrapCheck),
+        Box::new(UnvalidatedInvokeTargetCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),

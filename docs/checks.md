@@ -135,3 +135,24 @@ Calls to `env.current_contract_address().unwrap()` inside `#[contractimpl]` meth
 - Only checks methods inside `#[contractimpl]` impl blocks.
 
 **Fixture:** `test-contracts/current-contract-unwrap-vulnerable/`, `test-contracts/current-contract-unwrap-safe/`
+
+---
+
+## `unvalidated-invoke-target` (High)
+
+**Status:** Phase 1
+
+**What it detects**
+
+`env.invoke_contract(addr, ...)` calls where `addr` is a function parameter of type `Address`, and the contract does not appear to validate that address via storage lookup or equality comparison before invoking the external contract.
+
+**Why it matters**
+
+Passing caller-supplied addresses directly into cross-contract calls allows an attacker to redirect execution to arbitrary contracts. Validate target addresses against stored admin/whitelist values before invoking external contracts.
+
+**Limitations**
+
+- Only detects direct `env.invoke_contract(...)` calls inside `#[contractimpl]` methods.
+- Validation heuristics only consider preceding storage `get` calls and equality comparisons.
+
+**Fixture:** `test-contracts/unvalidated-invoke-target-vulnerable/`, `test-contracts/unvalidated-invoke-target-safe/`
