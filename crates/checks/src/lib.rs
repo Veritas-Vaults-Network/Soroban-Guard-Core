@@ -7,6 +7,7 @@ pub mod auth;
 pub mod burn_auth;
 pub mod mint_auth;
 pub mod contracttype;
+pub mod current_contract_unwrap;
 pub mod float_arithmetic;
 pub mod instance_ttl;
 pub mod missing_ttl;
@@ -29,6 +30,7 @@ pub use admin_overwrite::AdminOverwriteCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use mint_auth::MintAuthCheck;
+pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use instance_ttl::InstanceTtlCheck;
@@ -86,6 +88,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnprotectedAdminCheck),
         Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(CurrentContractUnwrapCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),

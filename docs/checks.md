@@ -114,3 +114,24 @@ Instance storage in Soroban has a TTL (time-to-live) and will expire if not peri
 - Checks the entire file, not per function.
 
 **Fixture:** `test-contracts/instance-ttl-vulnerable/`, `test-contracts/instance-ttl-safe/`
+
+---
+
+## `current-contract-unwrap` (Low)
+
+**Status:** Phase 1
+
+**What it detects**
+
+Calls to `env.current_contract_address().unwrap()` inside `#[contractimpl]` methods.
+
+**Why it matters**
+
+`env.current_contract_address()` returns an `Address` directly, not an `Option`. Calling `.unwrap()` on it indicates confusion with fallible methods and may mask real bugs nearby.
+
+**Limitations**
+
+- Only detects direct calls; does not analyze indirect calls through helper functions.
+- Only checks methods inside `#[contractimpl]` impl blocks.
+
+**Fixture:** `test-contracts/current-contract-unwrap-vulnerable/`, `test-contracts/current-contract-unwrap-safe/`
