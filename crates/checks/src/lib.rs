@@ -19,6 +19,7 @@ pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod weak_randomness;
 pub mod token_transfer_unchecked;
+pub mod invoke_in_loop;
 pub mod zero_amount;
 mod util;
 
@@ -38,6 +39,7 @@ pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
+pub use invoke_in_loop::InvokeInLoopCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -95,5 +97,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
         Box::new(MintAuthCheck),
+        Box::new(InvokeInLoopCheck),
     ]
 }
