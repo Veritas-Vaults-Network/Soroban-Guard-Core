@@ -12,6 +12,7 @@ pub mod missing_ttl;
 pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
+pub mod temp_get_no_has;
 pub mod overflow;
 pub mod panic_usage;
 pub mod reentrancy;
@@ -96,6 +97,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(SequenceAsKeyCheck),
         Box::new(NoStdCheck),
         Box::new(EnvInStructCheck),
+        Box::new(TempGetNoHasCheck),
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
