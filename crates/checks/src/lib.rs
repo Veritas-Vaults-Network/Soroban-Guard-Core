@@ -5,6 +5,7 @@ pub mod admin_in_temp;
 pub mod admin_overwrite;
 pub mod auth;
 pub mod burn_auth;
+pub mod contracterror_attr;
 pub mod mint_auth;
 pub mod contracttype;
 pub mod float_arithmetic;
@@ -12,13 +13,16 @@ pub mod missing_ttl;
 pub mod no_std;
 pub mod overflow;
 pub mod panic_usage;
+pub mod partial_write_on_error;
 pub mod reentrancy;
 pub mod self_transfer;
 pub mod storage;
+pub mod symbol_as_user_key;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod weak_randomness;
 pub mod token_transfer_unchecked;
+pub mod token_burn_auth;
 pub mod zero_amount;
 mod util;
 
@@ -27,6 +31,7 @@ pub use admin_in_temp::AdminInTempCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
+pub use contracterror_attr::ContracterrorAttrCheck;
 pub use mint_auth::MintAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
@@ -34,10 +39,13 @@ pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use symbol_as_user_key::SymbolAsUserKeyCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
+pub use token_burn_auth::TokenBurnAuthCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -84,7 +92,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnprotectedAdminCheck),
         Box::new(AdminOverwriteCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(SymbolAsUserKeyCheck),
         Box::new(PanicUsageCheck),
+        Box::new(PartialWriteOnErrorCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
@@ -94,6 +104,8 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
+        Box::new(ContracterrorAttrCheck),
+        Box::new(TokenBurnAuthCheck),
         Box::new(MintAuthCheck),
     ]
 }
