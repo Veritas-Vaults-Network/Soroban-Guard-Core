@@ -17,6 +17,7 @@ pub mod storage;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod weak_randomness;
+pub mod token_transfer_unchecked;
 pub mod zero_amount;
 mod util;
 
@@ -34,6 +35,7 @@ pub use panic_usage::PanicUsageCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -89,5 +91,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
+        Box::new(TokenTransferUncheckedCheck),
     ]
 }
