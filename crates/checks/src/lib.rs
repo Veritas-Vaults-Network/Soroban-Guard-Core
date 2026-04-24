@@ -8,6 +8,7 @@ pub mod burn_auth;
 pub mod mint_auth;
 pub mod contracttype;
 pub mod float_arithmetic;
+pub mod instance_ttl;
 pub mod missing_ttl;
 pub mod no_std;
 pub mod overflow;
@@ -30,6 +31,7 @@ pub use burn_auth::BurnAuthCheck;
 pub use mint_auth::MintAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
+pub use instance_ttl::InstanceTtlCheck;
 pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
@@ -95,5 +97,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
         Box::new(MintAuthCheck),
+        Box::new(InstanceTtlCheck),
     ]
 }
