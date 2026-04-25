@@ -14,7 +14,8 @@ pub enum Key {
 
 #[contractimpl]
 impl MapKeyExplosionSafe {
-    /// Uses typed enum keys instead of excessive string literals.
+    /// Uses typed enum keys instead of excessive string literals — safe approach.
+    /// This maintains type safety and makes storage layout auditable.
     pub fn safe_typed_keys(env: Env) {
         let mut map = Map::new(&env);
         map.set(Key::First, 1);
@@ -22,7 +23,8 @@ impl MapKeyExplosionSafe {
         map.set(Key::Third, 3);
     }
 
-    /// Uses fewer than 9 distinct string literal keys.
+    /// Uses exactly 8 distinct string literal keys — within safe threshold.
+    /// While not ideal, this stays under the key explosion limit.
     pub fn safe_few_string_keys(env: Env) {
         let mut map = Map::new(&env);
         map.set("key1", 1);

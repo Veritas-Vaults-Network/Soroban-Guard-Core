@@ -1,4 +1,8 @@
 //! Map used with excessive distinct string literal keys (key explosion).
+//!
+//! Using a Map with a large or unbounded set of string literal keys (more than ~10 distinct
+//! literals in the same function) instead of a typed struct or enum key is a code smell.
+//! It bypasses Soroban's type-safe storage key system and makes storage layout hard to audit.
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
@@ -11,7 +15,8 @@ const CHECK_NAME: &str = "map-key-explosion";
 const MAX_DISTINCT_KEYS: usize = 8;
 
 /// Detects functions that insert into a Map with more than 8 distinct string literal keys
-/// in the same function body.
+/// in the same function body. This pattern indicates potential key explosion and bypasses
+/// Soroban's type-safe storage key system.
 pub struct MapKeyExplosionCheck;
 
 impl Check for MapKeyExplosionCheck {
@@ -35,12 +40,12 @@ impl Check for MapKeyExplosionCheck {
                     severity: Severity::Low,
                     file_path: String::new(),
                     line: method.sig.ident.span().start().line,
-                    function_name: fn_name,
+                    function_name: fn_name.clone(),
                     description: format!(
-                        "Function `{}` uses Map with {} distinct string literal keys. \
-                         Consider using a typed struct or enum key instead of string literals \
-                         to maintain type safety and avoid key explosion.",
-                        fn_name, v.string_keys.len()
+                        "Function `{}` uses Map with {} distinct string literal keys (threshold: {}). \
+                         This 'key explosion' pattern bypasses Soroban's type-safe storage system. \
+                         Consider using a typed struct or enum key for better type safety and auditability.",
+                        fn_name, v.string_keys.len(), MAX_DISTINCT_KEYS
                     ),
                 });
             }
@@ -154,5 +159,29 @@ impl MyContract {
         let check = MapKeyExplosionCheck;
         let findings = check.run(&file, code);
         assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn detects_exactly_eight_keys() {
+        let code = r#"
+#[contractimpl]
+impl MyContract {
+    pub fn exactly_eight_keys(env: Env) {
+        let mut map = Map::new(&env);
+        map.set("key1", 1);
+        map.set("key2", 2);
+        map.set("key3", 3);
+        map.set("key4", 4);
+        map.set("key5", 5);
+        map.set("key6", 6);
+        map.set("key7", 7);
+        map.set("key8", 8);
+    }
+}
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = MapKeyExplosionCheck;
+        let findings = check.run(&file, code);
+        assert!(findings.is_empty()); // Exactly 8 should be allowed
     }
 }
