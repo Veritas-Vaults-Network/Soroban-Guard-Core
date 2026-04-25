@@ -17,7 +17,8 @@ pub mod self_transfer;
 pub mod storage;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
-pub mod unbounded_input_storage;
+
+pub mod deploy_arbitrary_wasm;
 pub mod weak_randomness;
 pub mod token_transfer_unchecked;
 pub mod zero_amount;
@@ -41,7 +42,8 @@ pub use storage::UnsafeStoragePatternsCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
-pub use unbounded_input_storage::UnboundedInputStorageCheck;
+
+pub use deploy_arbitrary_wasm::DeployArbitraryWasmCheck;
 pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 
@@ -89,7 +91,8 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
-        Box::new(UnboundedInputStorageCheck),
+
+        Box::new(DeployArbitraryWasmCheck),
         Box::new(ZeroAmountCheck),
         Box::new(SelfTransferCheck),
         Box::new(NoStdCheck),
