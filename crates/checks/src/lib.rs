@@ -23,6 +23,7 @@ pub mod reentrancy;
 pub mod self_transfer;
 pub mod sequence_nonce;
 pub mod storage;
+pub mod instance_domain_mixing;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod weak_randomness;
@@ -52,6 +53,7 @@ pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
@@ -100,6 +102,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AdminOverwriteCheck),
         Box::new(AdminKeyRemovalCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(InstanceDomainMixingCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
