@@ -2,6 +2,7 @@
 
 pub mod admin;
 pub mod admin_in_temp;
+pub mod auth_loop_dos;
 pub mod dynamic_symbol_key;
 pub mod instance_vec_growth;
 pub mod invoke_unchecked_cast;
@@ -9,6 +10,9 @@ pub mod migration_guard;
 pub mod negative_deposit;
 pub mod no_param_no_auth;
 pub mod storage_type_confusion;
+pub mod ownership_transfer;
+pub mod secp256k1_unchecked;
+pub mod temp_set_no_ttl;
 pub mod withdraw_auth;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
@@ -47,6 +51,7 @@ mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
+pub use auth_loop_dos::AuthLoopDosCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
@@ -54,6 +59,9 @@ pub use migration_guard::MigrationGuardCheck;
 pub use negative_deposit::NegativeDepositCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
+pub use ownership_transfer::OwnershipTransferCheck;
+pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
+pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
@@ -160,5 +168,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
         Box::new(StorageTypeConfusionCheck),
+        Box::new(AuthLoopDosCheck),
+        Box::new(OwnershipTransferCheck),
+        Box::new(Secp256k1UncheckedCheck),
+        Box::new(TempSetNoTtlCheck),
     ]
 }
