@@ -93,3 +93,24 @@ Names like `set_owner` strongly suggest privilege; without any auth call the sca
 - `Symbol::new` with a `const` or macro-expanded literal may still be flagged if it is not a `syn::Lit::Str`.
 
 **Fixture:** `test-contracts/storage-vulnerable/`, `test-contracts/storage-safe/`
+
+---
+
+## `instance-ttl-missing` (Medium)
+
+**Status:** Phase 1
+
+**What it detects**
+
+In a contract file, if there is at least one call to `env.storage().instance().set(...)` but no call to `env.storage().instance().extend_ttl(...)` anywhere in the file.
+
+**Why it matters**
+
+Instance storage in Soroban has a TTL (time-to-live) and will expire if not periodically extended. If a contract uses instance storage but never extends its TTL, the contract may become inaccessible once the instance expires.
+
+**Limitations**
+
+- Only detects direct calls; does not analyze indirect calls through helper functions.
+- Checks the entire file, not per function.
+
+**Fixture:** `test-contracts/instance-ttl-vulnerable/`, `test-contracts/instance-ttl-safe/`
