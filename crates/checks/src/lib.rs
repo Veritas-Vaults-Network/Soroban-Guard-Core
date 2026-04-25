@@ -19,6 +19,7 @@ pub mod sequence_as_key;
 pub mod temp_get_no_has;
 pub mod overflow;
 pub mod panic_usage;
+pub mod partial_write_on_error;
 pub mod reentrancy;
 pub mod self_transfer;
 pub mod sequence_nonce;
@@ -28,6 +29,7 @@ pub mod ttl_arg_order;
 pub mod unbounded_storage;
 pub mod weak_randomness;
 pub mod token_transfer_unchecked;
+pub mod token_burn_auth;
 pub mod zero_amount;
 mod util;
 
@@ -49,12 +51,14 @@ pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
+pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
+pub use token_burn_auth::TokenBurnAuthCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -104,6 +108,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(InstanceDomainMixingCheck),
         Box::new(PanicUsageCheck),
+        Box::new(PartialWriteOnErrorCheck),
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
@@ -116,6 +121,8 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
+        Box::new(ContracterrorAttrCheck),
+        Box::new(TokenBurnAuthCheck),
         Box::new(MintAuthCheck),
         Box::new(SequenceNonceCheck),
         Box::new(AssertForAuthCheck),
