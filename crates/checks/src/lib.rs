@@ -2,6 +2,10 @@
 
 pub mod admin;
 pub mod admin_in_temp;
+pub mod dynamic_symbol_key;
+pub mod instance_vec_growth;
+pub mod migration_guard;
+pub mod withdraw_auth;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
 pub mod assert_for_auth;
@@ -38,6 +42,10 @@ mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
+pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
+pub use instance_vec_growth::InstanceVecGrowthCheck;
+pub use migration_guard::MigrationGuardCheck;
+pub use withdraw_auth::WithdrawAuthCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use assert_for_auth::AssertForAuthCheck;
@@ -133,5 +141,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AssertForAuthCheck),
         Box::new(AuthorizeAsContractCheck),
         Box::new(MapKeyExplosionCheck),
+        Box::new(DynamicSymbolKeyCheck),
+        Box::new(InstanceVecGrowthCheck),
+        Box::new(MigrationGuardCheck),
+        Box::new(WithdrawAuthCheck),
     ]
 }
