@@ -14,6 +14,12 @@ pub mod ownership_transfer;
 pub mod secp256k1_unchecked;
 pub mod temp_set_no_ttl;
 pub mod withdraw_auth;
+pub mod broken_pause;
+pub mod bytes_not_bytesn;
+pub mod debug_entrypoint;
+pub mod extend_ttl_in_loop;
+pub mod hash_as_storage_key;
+pub mod unauth_address_in_struct;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
 pub mod assert_for_auth;
@@ -63,6 +69,12 @@ pub use ownership_transfer::OwnershipTransferCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
+pub use broken_pause::BrokenPauseCheck;
+pub use bytes_not_bytesn::BytesNotBytesNCheck;
+pub use debug_entrypoint::DebugEntrypointCheck;
+pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
+pub use hash_as_storage_key::HashAsStorageKeyCheck;
+pub use unauth_address_in_struct::UnauthAddressInStructCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use assert_for_auth::AssertForAuthCheck;
@@ -164,6 +176,12 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InstanceVecGrowthCheck),
         Box::new(MigrationGuardCheck),
         Box::new(WithdrawAuthCheck),
+        Box::new(BrokenPauseCheck),
+        Box::new(BytesNotBytesNCheck),
+        Box::new(DebugEntrypointCheck),
+        Box::new(ExtendTtlInLoopCheck),
+        Box::new(HashAsStorageKeyCheck),
+        Box::new(UnauthAddressInStructCheck),
         Box::new(InvokeUncheckedCastCheck),
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
