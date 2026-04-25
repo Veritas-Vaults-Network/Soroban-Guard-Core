@@ -2,6 +2,7 @@
 
 pub mod admin;
 pub mod admin_in_temp;
+pub mod admin_key_removal;
 pub mod admin_overwrite;
 pub mod auth;
 pub mod burn_auth;
@@ -24,6 +25,7 @@ mod util;
 
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
+pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
@@ -83,6 +85,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncheckedArithmeticCheck),
         Box::new(UnprotectedAdminCheck),
         Box::new(AdminOverwriteCheck),
+        Box::new(AdminKeyRemovalCheck),
         Box::new(UnsafeStoragePatternsCheck),
         Box::new(PanicUsageCheck),
         Box::new(MissingContracttypeCheck),
