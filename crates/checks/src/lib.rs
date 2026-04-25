@@ -3,8 +3,11 @@
 pub mod admin;
 pub mod admin_in_temp;
 pub mod admin_overwrite;
+pub mod assert_for_auth;
+pub mod authorize_as_contract;
 pub mod auth;
 pub mod burn_auth;
+pub mod map_key_explosion;
 pub mod mint_auth;
 pub mod contracttype;
 pub mod float_arithmetic;
@@ -14,6 +17,7 @@ pub mod overflow;
 pub mod panic_usage;
 pub mod reentrancy;
 pub mod self_transfer;
+pub mod sequence_nonce;
 pub mod storage;
 pub mod ttl_arg_order;
 pub mod unbounded_storage;
@@ -25,8 +29,11 @@ mod util;
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
+pub use assert_for_auth::AssertForAuthCheck;
+pub use authorize_as_contract::AuthorizeAsContractCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use burn_auth::BurnAuthCheck;
+pub use map_key_explosion::MapKeyExplosionCheck;
 pub use mint_auth::MintAuthCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
@@ -36,6 +43,7 @@ pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use self_transfer::SelfTransferCheck;
+pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
@@ -95,5 +103,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(ReentrancyCheck),
         Box::new(TokenTransferUncheckedCheck),
         Box::new(MintAuthCheck),
+        Box::new(SequenceNonceCheck),
+        Box::new(AssertForAuthCheck),
+        Box::new(AuthorizeAsContractCheck),
+        Box::new(MapKeyExplosionCheck),
     ]
 }
