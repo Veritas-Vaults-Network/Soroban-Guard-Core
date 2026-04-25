@@ -33,6 +33,7 @@ pub mod weak_randomness;
 pub mod token_transfer_unchecked;
 pub mod token_burn_auth;
 pub mod zero_amount;
+pub mod unvalidated_invoke_target;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
