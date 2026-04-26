@@ -40,6 +40,7 @@ pub mod temp_get_no_has;
 pub mod balance_overflow;
 pub mod event_before_storage;
 pub mod overflow;
+pub mod uncapped_fee;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -96,6 +97,7 @@ pub use env_in_struct::EnvInStructCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use event_before_storage::EventBeforeStorageCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use uncapped_fee::UncappedFeeCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -196,5 +198,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
         Box::new(EventBeforeStorageCheck),
+        Box::new(UncappedFeeCheck),
     ]
 }
