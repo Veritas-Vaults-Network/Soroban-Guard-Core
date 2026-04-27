@@ -37,7 +37,9 @@ pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
+pub mod balance_overflow;
 pub mod overflow;
+pub mod uncapped_fee;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -53,9 +55,10 @@ pub mod token_transfer_unchecked;
 pub mod token_burn_auth;
 pub mod zero_amount;
 pub mod unvalidated_invoke_target;
-pub mod contracterror_attr;
-pub mod balance_mul_overflow;
-pub mod expired_deadline;
+pub mod unbounded_batch;
+pub mod unvalidated_price;
+pub mod vesting_cliff;
+pub mod transfer_to_self;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -94,7 +97,9 @@ pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use uncapped_fee::UncappedFeeCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -109,10 +114,10 @@ pub use unbounded_storage::UnboundedStorageCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
-pub use temp_get_no_has::TempGetNoHasCheck;
-pub use contracterror_attr::ContracterrorAttrCheck;
-pub use balance_mul_overflow::BalanceMulOverflowCheck;
-pub use expired_deadline::ExpiredDeadlineCheck;
+pub use unbounded_batch::UnboundedBatchCheck;
+pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use vesting_cliff::VestingCliffCheck;
+pub use transfer_to_self::TransferToSelfCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -197,7 +202,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(OwnershipTransferCheck),
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
-        Box::new(BalanceMulOverflowCheck),
-        Box::new(ExpiredDeadlineCheck),
+        Box::new(BalanceOverflowCheck),
     ]
 }
