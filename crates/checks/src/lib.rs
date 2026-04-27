@@ -62,6 +62,7 @@ pub mod transfer_to_self;
 pub mod unauth_address_tuple;
 pub mod commitment_not_cleared;
 pub mod supply_cap;
+pub mod addr_param_no_auth;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -124,6 +125,7 @@ pub use transfer_to_self::TransferToSelfCheck;
 pub use unauth_address_tuple::UnauthAddressTupleCheck;
 pub use commitment_not_cleared::CommitmentNotClearedCheck;
 pub use supply_cap::SupplyCapCheck;
+pub use addr_param_no_auth::AddrParamNoAuthCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -212,5 +214,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnauthAddressTupleCheck),
         Box::new(CommitmentNotClearedCheck),
         Box::new(SupplyCapCheck),
+        Box::new(AddrParamNoAuthCheck),
     ]
 }
