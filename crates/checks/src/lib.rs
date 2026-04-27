@@ -37,7 +37,9 @@ pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
+pub mod balance_overflow;
 pub mod overflow;
+pub mod uncapped_fee;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -95,7 +97,9 @@ pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use uncapped_fee::UncappedFeeCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -198,9 +202,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(OwnershipTransferCheck),
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
-        Box::new(UnboundedBatchCheck),
-        Box::new(UnvalidatedPriceCheck),
-        Box::new(VestingCliffCheck),
-        Box::new(TransferToSelfCheck),
+        Box::new(BalanceOverflowCheck),
     ]
 }
