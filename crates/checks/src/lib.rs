@@ -37,6 +37,7 @@ pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
+pub mod contracterror_attr;
 pub mod balance_overflow;
 pub mod overflow;
 pub mod uncapped_fee;
@@ -59,10 +60,10 @@ pub mod unbounded_batch;
 pub mod unvalidated_price;
 pub mod vesting_cliff;
 pub mod transfer_to_self;
-pub mod init_admin_no_auth;
-pub mod invoke_result_stored;
-pub mod persistent_no_extend;
-pub mod reserved_fn_name;
+pub mod wrapping_balance_op;
+pub mod unauth_sensitive_read;
+pub mod instance_remove_critical;
+pub mod map_user_key_bloat;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -101,6 +102,8 @@ pub use missing_ttl::MissingTtlExtensionCheck;
 pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use temp_get_no_has::TempGetNoHasCheck;
+pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use uncapped_fee::UncappedFeeCheck;
@@ -122,10 +125,10 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
-pub use init_admin_no_auth::InitAdminNoAuthCheck;
-pub use invoke_result_stored::InvokeResultStoredCheck;
-pub use persistent_no_extend::PersistentNoExtendCheck;
-pub use reserved_fn_name::ReservedFnNameCheck;
+pub use wrapping_balance_op::WrappingBalanceOpCheck;
+pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
+pub use instance_remove_critical::InstanceRemoveCriticalCheck;
+pub use map_user_key_bloat::MapUserKeyBloatCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -211,9 +214,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
-        Box::new(InitAdminNoAuthCheck),
-        Box::new(InvokeResultStoredCheck),
-        Box::new(PersistentNoExtendCheck),
-        Box::new(ReservedFnNameCheck),
+        Box::new(WrappingBalanceOpCheck),
+        Box::new(UnauthSensitiveReadCheck),
+        Box::new(InstanceRemoveCriticalCheck),
+        Box::new(MapUserKeyBloatCheck),
     ]
 }
