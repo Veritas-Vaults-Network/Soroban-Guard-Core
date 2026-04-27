@@ -54,6 +54,7 @@ pub mod token_burn_auth;
 pub mod zero_amount;
 pub mod unvalidated_invoke_target;
 pub mod contracterror_attr;
+pub mod balance_mul_overflow;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -109,6 +110,7 @@ pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
+pub use balance_mul_overflow::BalanceMulOverflowCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -193,5 +195,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(OwnershipTransferCheck),
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
+        Box::new(BalanceMulOverflowCheck),
     ]
 }
