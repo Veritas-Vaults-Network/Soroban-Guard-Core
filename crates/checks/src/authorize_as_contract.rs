@@ -34,7 +34,7 @@ impl Check for AuthorizeAsContractCheck {
                     severity: Severity::High,
                     file_path: String::new(),
                     line: method.sig.ident.span().start().line,
-                    function_name: fn_name,
+                    function_name: fn_name.clone(),
                     description: format!(
                         "Function `{}` calls `env.authorize_as_current_contract(...)` without prior `require_auth()` or `require_auth_for_args()`. This may allow unauthorized callers to escalate contract authorization.",
                         fn_name
@@ -47,7 +47,7 @@ impl Check for AuthorizeAsContractCheck {
 }
 
 fn is_require_auth_call(m: &ExprMethodCall) -> bool {
-    matches!(m.method.as_str(), "require_auth" | "require_auth_for_args") && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
+    (m.method == "require_auth" || m.method == "require_auth_for_args") && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
 }
 
 fn is_authorize_current_contract_call(m: &ExprMethodCall) -> bool {

@@ -30,7 +30,6 @@ impl Check for MapKeyExplosionCheck {
             let fn_name = method.sig.ident.to_string();
             let mut v = MapKeyVisitor {
                 fn_name: fn_name.clone(),
-                out: &mut out,
                 string_keys: HashSet::new(),
             };
             v.visit_block(&method.block);
@@ -74,13 +73,12 @@ fn extract_string_literal_key(call: &ExprMethodCall) -> Option<String> {
     None
 }
 
-struct MapKeyVisitor<'a> {
+struct MapKeyVisitor {
     fn_name: String,
-    out: &'a mut Vec<Finding>,
     string_keys: HashSet<String>,
 }
 
-impl Visit<'_> for MapKeyVisitor<'_> {
+impl Visit<'_> for MapKeyVisitor {
     fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
         if is_map_set_call(i) {
             if let Some(key) = extract_string_literal_key(i) {

@@ -70,14 +70,6 @@ impl Visit<'_> for StatementScanner {
                         self.error_points.push(idx);
                     }
                 }
-                Stmt::Semi(expr, _) => {
-                    if is_persistent_write(expr) {
-                        self.persistent_writes.push(idx);
-                    }
-                    if is_error_point(expr) {
-                        self.error_points.push(idx);
-                    }
-                }
                 _ => {}
             }
 

@@ -24,7 +24,7 @@ impl Check for TokenBurnAuthCheck {
             let mut scanner = AuthScanner::new(&method.sig.inputs);
             scanner.visit_block(&method.block);
 
-            for burn_call in scanner.burn_calls {
+            for burn_call in &scanner.burn_calls {
                 if !scanner.has_auth_for(&burn_call.from_param) {
                     out.push(Finding {
                         check_name: CHECK_NAME.to_string(),
