@@ -60,6 +60,7 @@ pub mod unvalidated_price;
 pub mod vesting_cliff;
 pub mod transfer_to_self;
 pub mod init_admin_no_auth;
+pub mod invoke_result_stored;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -120,6 +121,7 @@ pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 pub use init_admin_no_auth::InitAdminNoAuthCheck;
+pub use invoke_result_stored::InvokeResultStoredCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -206,5 +208,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
         Box::new(InitAdminNoAuthCheck),
+        Box::new(InvokeResultStoredCheck),
     ]
 }
