@@ -38,7 +38,6 @@ pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
 pub mod balance_overflow;
-pub mod event_before_storage;
 pub mod overflow;
 pub mod uncapped_fee;
 pub mod panic_usage;
@@ -95,7 +94,6 @@ pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use balance_overflow::BalanceOverflowCheck;
-pub use event_before_storage::EventBeforeStorageCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use uncapped_fee::UncappedFeeCheck;
 pub use panic_usage::PanicUsageCheck;
@@ -197,7 +195,5 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
-        Box::new(EventBeforeStorageCheck),
-        Box::new(UncappedFeeCheck),
     ]
 }
