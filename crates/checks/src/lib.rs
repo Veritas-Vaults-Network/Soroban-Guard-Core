@@ -55,6 +55,7 @@ pub mod zero_amount;
 pub mod unvalidated_invoke_target;
 pub mod contracterror_attr;
 pub mod balance_mul_overflow;
+pub mod expired_deadline;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -111,6 +112,7 @@ pub use zero_amount::ZeroAmountCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_mul_overflow::BalanceMulOverflowCheck;
+pub use expired_deadline::ExpiredDeadlineCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -196,5 +198,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceMulOverflowCheck),
+        Box::new(ExpiredDeadlineCheck),
     ]
 }
