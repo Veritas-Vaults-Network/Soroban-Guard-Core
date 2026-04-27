@@ -59,6 +59,7 @@ pub mod unbounded_batch;
 pub mod unvalidated_price;
 pub mod vesting_cliff;
 pub mod transfer_to_self;
+pub mod unauth_address_tuple;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -118,6 +119,7 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
+pub use unauth_address_tuple::UnauthAddressTupleCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -203,5 +205,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
+        Box::new(UnauthAddressTupleCheck),
     ]
 }
