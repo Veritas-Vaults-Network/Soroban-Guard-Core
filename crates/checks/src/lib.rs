@@ -57,6 +57,7 @@ pub mod zero_amount;
 pub mod unvalidated_invoke_target;
 pub mod unbounded_batch;
 pub mod unvalidated_price;
+pub mod vec_push_in_loop;
 pub mod vesting_cliff;
 pub mod transfer_to_self;
 mod util;
@@ -116,6 +117,7 @@ pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use unbounded_batch::UnboundedBatchCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 
@@ -203,5 +205,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
         Box::new(BalanceOverflowCheck),
+        Box::new(VecPushInLoopCheck),
     ]
 }
