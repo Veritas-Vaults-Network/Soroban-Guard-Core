@@ -62,6 +62,7 @@ pub mod transfer_to_self;
 pub mod init_admin_no_auth;
 pub mod invoke_result_stored;
 pub mod persistent_no_extend;
+pub mod reserved_fn_name;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -124,6 +125,7 @@ pub use transfer_to_self::TransferToSelfCheck;
 pub use init_admin_no_auth::InitAdminNoAuthCheck;
 pub use invoke_result_stored::InvokeResultStoredCheck;
 pub use persistent_no_extend::PersistentNoExtendCheck;
+pub use reserved_fn_name::ReservedFnNameCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -212,5 +214,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InitAdminNoAuthCheck),
         Box::new(InvokeResultStoredCheck),
         Box::new(PersistentNoExtendCheck),
+        Box::new(ReservedFnNameCheck),
     ]
 }
