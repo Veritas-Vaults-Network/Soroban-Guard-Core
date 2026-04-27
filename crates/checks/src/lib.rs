@@ -61,6 +61,7 @@ pub mod vesting_cliff;
 pub mod transfer_to_self;
 pub mod unauth_address_tuple;
 pub mod commitment_not_cleared;
+pub mod supply_cap;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -122,6 +123,7 @@ pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 pub use unauth_address_tuple::UnauthAddressTupleCheck;
 pub use commitment_not_cleared::CommitmentNotClearedCheck;
+pub use supply_cap::SupplyCapCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -209,5 +211,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(BalanceOverflowCheck),
         Box::new(UnauthAddressTupleCheck),
         Box::new(CommitmentNotClearedCheck),
+        Box::new(SupplyCapCheck),
     ]
 }
