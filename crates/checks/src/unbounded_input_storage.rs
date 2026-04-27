@@ -102,7 +102,7 @@ impl<'ast> Visit<'ast> for UnboundedInputStorageScan<'_> {
 fn extract_ident(expr: &Expr) -> Option<&Ident> {
     match expr {
         Expr::Path(path) => path.path.get_ident(),
-        Expr::AddrOf(addr) => extract_ident(&addr.expr),
+        Expr::Reference(addr) => extract_ident(&addr.expr),
         Expr::MethodCall(m) if m.method == "clone" => extract_ident(&m.receiver),
         _ => None,
     }
