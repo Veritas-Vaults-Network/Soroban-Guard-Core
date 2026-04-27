@@ -53,6 +53,10 @@ pub mod token_transfer_unchecked;
 pub mod token_burn_auth;
 pub mod zero_amount;
 pub mod unvalidated_invoke_target;
+pub mod unbounded_batch;
+pub mod unvalidated_price;
+pub mod vesting_cliff;
+pub mod transfer_to_self;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -106,6 +110,10 @@ pub use unbounded_storage::UnboundedStorageCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use weak_randomness::WeakRandomnessCheck;
 pub use zero_amount::ZeroAmountCheck;
+pub use unbounded_batch::UnboundedBatchCheck;
+pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use vesting_cliff::VestingCliffCheck;
+pub use transfer_to_self::TransferToSelfCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -190,5 +198,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(OwnershipTransferCheck),
         Box::new(Secp256k1UncheckedCheck),
         Box::new(TempSetNoTtlCheck),
+        Box::new(UnboundedBatchCheck),
+        Box::new(UnvalidatedPriceCheck),
+        Box::new(VestingCliffCheck),
+        Box::new(TransferToSelfCheck),
     ]
 }
