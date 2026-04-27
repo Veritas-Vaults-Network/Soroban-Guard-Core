@@ -61,6 +61,7 @@ pub mod vesting_cliff;
 pub mod transfer_to_self;
 pub mod init_admin_no_auth;
 pub mod invoke_result_stored;
+pub mod persistent_no_extend;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -122,6 +123,7 @@ pub use vesting_cliff::VestingCliffCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 pub use init_admin_no_auth::InitAdminNoAuthCheck;
 pub use invoke_result_stored::InvokeResultStoredCheck;
+pub use persistent_no_extend::PersistentNoExtendCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -209,5 +211,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(BalanceOverflowCheck),
         Box::new(InitAdminNoAuthCheck),
         Box::new(InvokeResultStoredCheck),
+        Box::new(PersistentNoExtendCheck),
     ]
 }
