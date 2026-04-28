@@ -2,10 +2,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, File, FnArg, Pat, Visibility};
-use std::collections::HashSet;
 
 const CHECK_NAME: &str = "unvalidated-price";
 

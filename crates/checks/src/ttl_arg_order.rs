@@ -66,9 +66,10 @@ struct TtlVisitor<'a> {
 impl<'a> Visit<'a> for TtlVisitor<'a> {
     fn visit_expr_method_call(&mut self, i: &'a ExprMethodCall) {
         if is_extend_ttl_call(i) && i.args.len() == 2 {
-            if let (Some(first), Some(second)) =
-                (extract_int_literal(&i.args[0]), extract_int_literal(&i.args[1]))
-            {
+            if let (Some(first), Some(second)) = (
+                extract_int_literal(&i.args[0]),
+                extract_int_literal(&i.args[1]),
+            ) {
                 if first > second {
                     self.out.push(Finding {
                         check_name: CHECK_NAME.to_string(),

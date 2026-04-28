@@ -15,7 +15,9 @@ const CHECK_NAME: &str = "unauth-address-in-struct";
 fn receiver_chain_contains_storage(expr: &Expr) -> bool {
     match expr {
         Expr::MethodCall(m) => {
-            if m.method == "storage" { return true; }
+            if m.method == "storage" {
+                return true;
+            }
             receiver_chain_contains_storage(&m.receiver)
         }
         Expr::Field(f) => receiver_chain_contains_storage(&f.base),
@@ -25,8 +27,12 @@ fn receiver_chain_contains_storage(expr: &Expr) -> bool {
 
 fn type_last_ident(ty: &Type) -> String {
     match ty {
-        Type::Path(p) => p.path.segments.last()
-            .map(|s| s.ident.to_string()).unwrap_or_default(),
+        Type::Path(p) => p
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default(),
         Type::Reference(r) => type_last_ident(&r.elem),
         _ => String::new(),
     }

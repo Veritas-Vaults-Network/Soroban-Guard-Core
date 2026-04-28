@@ -25,11 +25,11 @@ impl Check for WrappingBalanceOpCheck {
         let mut out = Vec::new();
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
-            
+
             // Check if function has storage writes or token operations
             let has_storage_write = method.block.stmts.iter().any(stmt_has_storage_set);
             let has_token_op = method.block.stmts.iter().any(stmt_has_token_call);
-            
+
             if has_storage_write || has_token_op {
                 let mut v = WrappingOpVisitor {
                     fn_name: fn_name.clone(),
@@ -50,7 +50,10 @@ struct WrappingOpVisitor<'a> {
 impl Visit<'_> for WrappingOpVisitor<'_> {
     fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
         let method_name = i.method.to_string();
-        if matches!(method_name.as_str(), "wrapping_add" | "wrapping_sub" | "wrapping_mul") {
+        if matches!(
+            method_name.as_str(),
+            "wrapping_add" | "wrapping_sub" | "wrapping_mul"
+        ) {
             self.out.push(Finding {
                 check_name: CHECK_NAME.to_string(),
                 severity: Severity::High,
@@ -97,7 +100,10 @@ fn expr_has_token_call(expr: &Expr) -> bool {
     match expr {
         Expr::MethodCall(m) => {
             let method_name = m.method.to_string();
-            if matches!(method_name.as_str(), "transfer" | "mint" | "burn" | "approve") {
+            if matches!(
+                method_name.as_str(),
+                "transfer" | "mint" | "burn" | "approve"
+            ) {
                 return true;
             }
             expr_has_token_call(&m.receiver)

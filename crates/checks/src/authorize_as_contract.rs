@@ -47,11 +47,13 @@ impl Check for AuthorizeAsContractCheck {
 }
 
 fn is_require_auth_call(m: &ExprMethodCall) -> bool {
-    (m.method == "require_auth" || m.method == "require_auth_for_args") && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
+    (m.method == "require_auth" || m.method == "require_auth_for_args")
+        && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
 }
 
 fn is_authorize_current_contract_call(m: &ExprMethodCall) -> bool {
-    m.method == "authorize_as_current_contract" && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
+    m.method == "authorize_as_current_contract"
+        && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
 }
 
 struct AuthCallScan<'a> {

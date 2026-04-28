@@ -1,4 +1,4 @@
-﻿//! Flags `pub fn mint` in `#[contractimpl]` blocks where `require_auth()` is called
+//! Flags `pub fn mint` in `#[contractimpl]` blocks where `require_auth()` is called
 //! on a recipient parameter (`to` or `recipient`) instead of on a privileged
 //! admin/minter address loaded from contract storage.
 //!
@@ -21,7 +21,7 @@ use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprMethodCall, FnArg, File, Pat, PatType, Visibility};
+use syn::{Expr, ExprMethodCall, File, FnArg, Pat, PatType, Visibility};
 
 const CHECK_NAME: &str = "mint-auth-on-recipient";
 
@@ -168,7 +168,7 @@ mod tests {
         MintAuthCheck.run(&parse_file(src).unwrap(), src)
     }
 
-    //  Vulnerable cases 
+    //  Vulnerable cases
 
     #[test]
     fn flags_mint_with_to_require_auth() {
@@ -204,7 +204,7 @@ impl Token {
         assert_eq!(hits[0].severity, Severity::High);
     }
 
-    //  Safe cases 
+    //  Safe cases
 
     #[test]
     fn passes_when_admin_loaded_from_storage_and_authed() {

@@ -30,9 +30,16 @@ fn expr_is_storage_get(expr: &Expr) -> bool {
     match expr {
         Expr::MethodCall(m) => {
             let name = m.method.to_string();
-            if matches!(name.as_str(), "get" | "get_unchecked" | "unwrap" | "unwrap_or"
-                | "unwrap_or_else" | "unwrap_or_default" | "expect")
-            {
+            if matches!(
+                name.as_str(),
+                "get"
+                    | "get_unchecked"
+                    | "unwrap"
+                    | "unwrap_or"
+                    | "unwrap_or_else"
+                    | "unwrap_or_default"
+                    | "expect"
+            ) {
                 // Either this call itself is a storage get, or its receiver is.
                 if matches!(name.as_str(), "get" | "get_unchecked")
                     && receiver_chain_contains_storage(&m.receiver)

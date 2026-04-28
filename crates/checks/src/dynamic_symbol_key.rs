@@ -50,7 +50,13 @@ fn second_arg_is_string_lit(call: &ExprCall) -> bool {
         Expr::Reference(r) => &*r.expr,
         other => other,
     };
-    matches!(inner, Expr::Lit(syn::ExprLit { lit: Lit::Str(_), .. }))
+    matches!(
+        inner,
+        Expr::Lit(syn::ExprLit {
+            lit: Lit::Str(_),
+            ..
+        })
+    )
 }
 
 /// True if the first argument to `.set(key, val)` (after stripping `&`) contains

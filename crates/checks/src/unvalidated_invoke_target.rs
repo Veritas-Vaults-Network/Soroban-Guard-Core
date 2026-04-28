@@ -35,7 +35,9 @@ impl Check for UnvalidatedInvokeTargetCheck {
     }
 }
 
-fn address_param_names(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>) -> Vec<String> {
+fn address_param_names(
+    inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>,
+) -> Vec<String> {
     inputs
         .iter()
         .filter_map(|arg| {
@@ -56,9 +58,7 @@ fn address_param_names(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::C
 
 fn is_address_type(ty: &Type) -> bool {
     if let Type::Path(TypePath { path, .. }) = ty {
-        path.segments
-            .last()
-            .is_some_and(|s| s.ident == "Address")
+        path.segments.last().is_some_and(|s| s.ident == "Address")
     } else {
         false
     }
