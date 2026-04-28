@@ -38,6 +38,7 @@ pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
+pub mod temp_read_in_view;
 pub mod contracterror_attr;
 pub mod balance_overflow;
 pub mod overflow;
