@@ -66,6 +66,7 @@ pub mod wrapping_balance_op;
 pub mod unauth_sensitive_read;
 pub mod instance_remove_critical;
 pub mod map_user_key_bloat;
+pub mod timestamp_truncation;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -133,6 +134,7 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
+pub use timestamp_truncation::TimestampTruncationCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -222,5 +224,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnauthSensitiveReadCheck),
         Box::new(InstanceRemoveCriticalCheck),
         Box::new(MapUserKeyBloatCheck),
+        Box::new(TimestampTruncationCheck),
     ]
 }
