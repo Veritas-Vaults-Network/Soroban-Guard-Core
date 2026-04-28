@@ -43,6 +43,7 @@ pub mod contracterror_attr;
 pub mod balance_overflow;
 pub mod overflow;
 pub mod uncapped_fee;
+pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -113,6 +114,7 @@ pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use uncapped_fee::UncappedFeeCheck;
+pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -229,5 +231,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InstanceRemoveCriticalCheck),
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
+        Box::new(UnlimitedAllowanceCheck),
     ]
 }
