@@ -37,6 +37,7 @@ pub mod no_std;
 pub mod env_in_struct;
 pub mod sequence_as_key;
 pub mod temp_get_no_has;
+pub mod temp_read_in_view;
 pub mod contracterror_attr;
 pub mod balance_overflow;
 pub mod overflow;
@@ -105,6 +106,7 @@ pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
+pub use temp_read_in_view::TempReadInViewCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
@@ -188,6 +190,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(NoStdCheck),
         Box::new(EnvInStructCheck),
         Box::new(TempGetNoHasCheck),
+        Box::new(TempReadInViewCheck),
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
