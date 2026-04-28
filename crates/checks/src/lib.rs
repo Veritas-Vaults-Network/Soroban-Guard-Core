@@ -13,6 +13,7 @@ pub mod storage_type_confusion;
 pub mod ownership_transfer;
 pub mod secp256k1_unchecked;
 pub mod temp_set_no_ttl;
+pub mod amount_mul_overflow;
 pub mod withdraw_auth;
 pub mod broken_pause;
 pub mod bytes_not_bytesn;
@@ -106,6 +107,7 @@ pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
+pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
@@ -190,6 +192,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(NoStdCheck),
         Box::new(EnvInStructCheck),
         Box::new(TempGetNoHasCheck),
+        Box::new(AmountMulOverflowCheck),
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
