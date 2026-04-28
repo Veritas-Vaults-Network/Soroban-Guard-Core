@@ -13,6 +13,7 @@ pub mod storage_type_confusion;
 pub mod ownership_transfer;
 pub mod secp256k1_unchecked;
 pub mod temp_set_no_ttl;
+pub mod amount_mul_overflow;
 pub mod withdraw_auth;
 pub mod broken_pause;
 pub mod bytes_not_bytesn;
@@ -67,6 +68,7 @@ pub mod wrapping_balance_op;
 pub mod unauth_sensitive_read;
 pub mod instance_remove_critical;
 pub mod map_user_key_bloat;
+pub mod timestamp_truncation;
 mod util;
 
 pub use admin::UnprotectedAdminCheck;
@@ -106,7 +108,7 @@ pub use no_std::NoStdCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
-pub use temp_read_in_view::TempReadInViewCheck;
+pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use overflow::UncheckedArithmeticCheck;
@@ -135,6 +137,7 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
+pub use timestamp_truncation::TimestampTruncationCheck;
 
 use serde::Serialize;
 use syn::File;
@@ -190,7 +193,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(NoStdCheck),
         Box::new(EnvInStructCheck),
         Box::new(TempGetNoHasCheck),
-        Box::new(TempReadInViewCheck),
+        Box::new(AmountMulOverflowCheck),
         Box::new(FloatArithmeticCheck),
         Box::new(WeakRandomnessCheck),
         Box::new(ReentrancyCheck),
@@ -225,5 +228,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UnauthSensitiveReadCheck),
         Box::new(InstanceRemoveCriticalCheck),
         Box::new(MapUserKeyBloatCheck),
+        Box::new(TimestampTruncationCheck),
     ]
 }
