@@ -10,9 +10,7 @@ use syn::{File, Visibility};
 
 const CHECK_NAME: &str = "debug-entrypoint";
 
-const SUSPICIOUS_SUBSTRINGS: &[&str] = &[
-    "debug", "test", "dev_", "backdoor", "mock", "dummy",
-];
+const SUSPICIOUS_SUBSTRINGS: &[&str] = &["debug", "test", "dev_", "backdoor", "mock", "dummy"];
 
 fn name_is_suspicious(name: &str) -> bool {
     let lower = name.to_lowercase();

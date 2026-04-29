@@ -68,10 +68,15 @@ fn expr_contains_ledger_sequence_or_timestamp(expr: &Expr) -> bool {
             if m.method == "sequence" || m.method == "timestamp" {
                 return receiver_chain_contains_ledger(&m.receiver);
             }
-            m.args.iter().any(expr_contains_ledger_sequence_or_timestamp)
+            m.args
+                .iter()
+                .any(expr_contains_ledger_sequence_or_timestamp)
                 || expr_contains_ledger_sequence_or_timestamp(&m.receiver)
         }
-        Expr::Call(c) => c.args.iter().any(expr_contains_ledger_sequence_or_timestamp),
+        Expr::Call(c) => c
+            .args
+            .iter()
+            .any(expr_contains_ledger_sequence_or_timestamp),
         Expr::Field(f) => expr_contains_ledger_sequence_or_timestamp(&f.base),
         Expr::Index(i) => {
             expr_contains_ledger_sequence_or_timestamp(&i.expr)
@@ -84,9 +89,18 @@ fn expr_contains_ledger_sequence_or_timestamp(expr: &Expr) -> bool {
         Expr::Unary(u) => expr_contains_ledger_sequence_or_timestamp(&u.expr),
         Expr::Paren(p) => expr_contains_ledger_sequence_or_timestamp(&p.expr),
         Expr::Reference(r) => expr_contains_ledger_sequence_or_timestamp(&r.expr),
-        Expr::Tuple(t) => t.elems.iter().any(expr_contains_ledger_sequence_or_timestamp),
-        Expr::Array(a) => a.elems.iter().any(expr_contains_ledger_sequence_or_timestamp),
-        Expr::Struct(s) => s.fields.iter().any(|f| expr_contains_ledger_sequence_or_timestamp(&f.expr)),
+        Expr::Tuple(t) => t
+            .elems
+            .iter()
+            .any(expr_contains_ledger_sequence_or_timestamp),
+        Expr::Array(a) => a
+            .elems
+            .iter()
+            .any(expr_contains_ledger_sequence_or_timestamp),
+        Expr::Struct(s) => s
+            .fields
+            .iter()
+            .any(|f| expr_contains_ledger_sequence_or_timestamp(&f.expr)),
         _ => false,
     }
 }

@@ -41,9 +41,7 @@ impl Check for UncappedFeeCheck {
 
             // For each fee var, check whether a cap guard precedes any `*` use.
             for fee_var in &fee_vars {
-                let guarded = stmts
-                    .iter()
-                    .any(|s| stmt_has_cap_guard(s, fee_var));
+                let guarded = stmts.iter().any(|s| stmt_has_cap_guard(s, fee_var));
 
                 if !guarded {
                     // Look for a multiplication involving this fee var.
@@ -172,10 +170,7 @@ fn expr_to_name_hint(expr: &Expr) -> String {
 
 /// Returns true if the statement contains a `<= CAP_VALUE` comparison involving `var`.
 fn stmt_has_cap_guard(stmt: &Stmt, var: &str) -> bool {
-    let mut v = CapGuardFinder {
-        var,
-        found: false,
-    };
+    let mut v = CapGuardFinder { var, found: false };
     v.visit_stmt(stmt);
     v.found
 }

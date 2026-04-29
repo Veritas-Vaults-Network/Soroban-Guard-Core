@@ -25,7 +25,7 @@ impl Check for MapUserKeyBloatCheck {
         let mut out = Vec::new();
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
-            
+
             // Collect parameter names
             let mut param_names = Vec::new();
             for input in &method.sig.inputs {
@@ -35,7 +35,7 @@ impl Check for MapUserKeyBloatCheck {
                     }
                 }
             }
-            
+
             // Scan for Map::set() calls and len() checks
             let mut v = MapSetVisitor {
                 param_names: &param_names,
@@ -43,7 +43,7 @@ impl Check for MapUserKeyBloatCheck {
                 has_len_check: false,
             };
             v.visit_block(&method.block);
-            
+
             // Report findings for Map::set() calls with user keys and no len() guard
             if !v.map_set_with_user_key.is_empty() && !v.has_len_check {
                 for line in v.map_set_with_user_key {
@@ -84,12 +84,12 @@ impl Visit<'_> for MapSetVisitor<'_> {
                 }
             }
         }
-        
+
         // Check for len() method calls (size guard)
         if i.method == "len" {
             self.has_len_check = true;
         }
-        
+
         visit::visit_expr_method_call(self, i);
     }
 }
@@ -100,9 +100,7 @@ fn is_storage_set(m: &ExprMethodCall) -> bool {
 
 fn receiver_chain_contains(expr: &Expr, name: &str) -> bool {
     match expr {
-        Expr::MethodCall(m) => {
-            m.method == name || receiver_chain_contains(&m.receiver, name)
-        }
+        Expr::MethodCall(m) => m.method == name || receiver_chain_contains(&m.receiver, name),
         Expr::Field(f) => receiver_chain_contains(&f.base, name),
         _ => false,
     }

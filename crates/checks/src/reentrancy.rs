@@ -47,8 +47,7 @@ impl Check for ReentrancyCheck {
 }
 
 fn is_invoke_contract(m: &ExprMethodCall) -> bool {
-    m.method == "invoke_contract"
-        && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
+    m.method == "invoke_contract" && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
 }
 
 fn receiver_has_storage(expr: &Expr) -> bool {
@@ -59,8 +58,10 @@ fn receiver_has_storage(expr: &Expr) -> bool {
 }
 
 fn is_storage_write(m: &ExprMethodCall) -> bool {
-    matches!(m.method.to_string().as_str(), "set" | "remove" | "bump" | "extend_ttl")
-        && receiver_has_storage(&m.receiver)
+    matches!(
+        m.method.to_string().as_str(),
+        "set" | "remove" | "bump" | "extend_ttl"
+    ) && receiver_has_storage(&m.receiver)
 }
 
 #[derive(Default)]

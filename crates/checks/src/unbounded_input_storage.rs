@@ -9,7 +9,7 @@ use crate::{Check, Finding, Severity};
 use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprBinary, ExprMethodCall, File, Ident, Type, BinOp};
+use syn::{BinOp, Expr, ExprBinary, ExprMethodCall, File, Ident, Type};
 
 const CHECK_NAME: &str = "unbounded-input-storage";
 
@@ -56,9 +56,7 @@ impl<'ast> Visit<'ast> for UnboundedInputStorageScan<'_> {
             // set(key, value) - value is second argument (index 1)
             if let Some(value_arg) = i.args.iter().nth(1) {
                 if let Some(ident) = extract_ident(value_arg) {
-                    if self.vec_map_params.contains(&ident)
-                        && !self.len_checked.contains(&ident)
-                    {
+                    if self.vec_map_params.contains(&ident) && !self.len_checked.contains(&ident) {
                         let line = i.span().start().line;
                         self.out.push(Finding {
                             check_name: CHECK_NAME.to_string(),
@@ -127,7 +125,9 @@ fn is_comparison_op(op: &BinOp) -> bool {
 }
 
 /// Collect identifiers of parameters whose type is Vec<_> or Map<_, _>.
-fn collect_vec_map_params(inputs: &syn::punctuated::Punctuated<syn::FnArg, syn::token::Comma>) -> HashSet<Ident> {
+fn collect_vec_map_params(
+    inputs: &syn::punctuated::Punctuated<syn::FnArg, syn::token::Comma>,
+) -> HashSet<Ident> {
     let mut set = HashSet::new();
     for input in inputs {
         if let syn::FnArg::Typed(pat_type) = input {

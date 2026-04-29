@@ -67,8 +67,7 @@ fn expr_has_persistent_get(expr: &Expr) -> bool {
             if m.method == "get" && is_persistent_storage_call(m) {
                 return true;
             }
-            m.args.iter().any(expr_has_persistent_get)
-                || expr_has_persistent_get(&m.receiver)
+            m.args.iter().any(expr_has_persistent_get) || expr_has_persistent_get(&m.receiver)
         }
         _ => false,
     }
@@ -88,7 +87,10 @@ fn expr_has_persistent_set(expr: &Expr) -> bool {
 
 fn stmt_has_persistent_get(stmt: &Stmt) -> bool {
     match stmt {
-        Stmt::Local(l) => l.init.as_ref().map_or(false, |i| expr_has_persistent_get(&i.expr)),
+        Stmt::Local(l) => l
+            .init
+            .as_ref()
+            .map_or(false, |i| expr_has_persistent_get(&i.expr)),
         Stmt::Expr(e, _) => expr_has_persistent_get(e),
         _ => false,
     }

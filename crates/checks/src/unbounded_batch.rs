@@ -2,10 +2,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{Expr, ExprForLoop, ExprMethodCall, File, FnArg, Pat, Type};
-use std::collections::HashSet;
 
 const CHECK_NAME: &str = "unbounded-batch";
 
@@ -58,7 +58,9 @@ fn source_has_len_guard(source: &str, start_line: usize, end_line: usize) -> boo
 fn collect_vec_params(method: &syn::ImplItemFn) -> HashSet<String> {
     let mut names = HashSet::new();
     for arg in &method.sig.inputs {
-        let FnArg::Typed(pat_type) = arg else { continue };
+        let FnArg::Typed(pat_type) = arg else {
+            continue;
+        };
         if !is_vec_type(&pat_type.ty) {
             continue;
         }
@@ -119,7 +121,10 @@ fn extract_iter_name(expr: &Expr) -> Option<String> {
     match expr {
         Expr::Path(p) => p.path.get_ident().map(|i| i.to_string()),
         Expr::MethodCall(m) => {
-            if matches!(m.method.to_string().as_str(), "iter" | "into_iter" | "iter_mut") {
+            if matches!(
+                m.method.to_string().as_str(),
+                "iter" | "into_iter" | "iter_mut"
+            ) {
                 extract_iter_name(&m.receiver)
             } else {
                 None

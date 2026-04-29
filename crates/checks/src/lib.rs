@@ -8,7 +8,6 @@ pub mod amount_mul_overflow;
 pub mod assert_for_auth;
 pub mod auth;
 pub mod auth_loop_dos;
-pub mod auth_on_literal_addr;
 pub mod authorize_as_contract;
 pub mod balance_overflow;
 pub mod broken_pause;
@@ -37,7 +36,8 @@ pub mod negative_deposit;
 pub mod no_param_no_auth;
 pub mod no_std;
 pub mod overflow;
-pub mod ownership_transfer;
+pub mod uncapped_fee;
+pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -50,6 +50,7 @@ pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
+pub mod timestamp_expiry_no_min;
 pub mod timestamp_truncation;
 pub mod token_burn_auth;
 pub mod token_transfer_unchecked;
@@ -80,7 +81,6 @@ pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use assert_for_auth::AssertForAuthCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use auth_loop_dos::AuthLoopDosCheck;
-pub use auth_on_literal_addr::AuthOnLiteralAddrCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
@@ -109,7 +109,8 @@ pub use negative_deposit::NegativeDepositCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
-pub use ownership_transfer::OwnershipTransferCheck;
+pub use uncapped_fee::UncappedFeeCheck;
+pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -121,6 +122,7 @@ pub use storage::UnsafeStoragePatternsCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
+pub use timestamp_expiry_no_min::TimestampExpiryNoMinCheck;
 pub use timestamp_truncation::TimestampTruncationCheck;
 pub use token_burn_auth::TokenBurnAuthCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
@@ -231,6 +233,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InstanceRemoveCriticalCheck),
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
-        Box::new(AuthOnLiteralAddrCheck),
+        Box::new(UnlimitedAllowanceCheck),
     ]
 }

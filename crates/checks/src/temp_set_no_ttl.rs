@@ -117,7 +117,11 @@ impl Check for TempSetNoTtlCheck {
                              entry will use the default TTL, which may be too short for the \
                              intended validity window. Call `extend_ttl` immediately after \
                              `set` to explicitly control the entry lifetime.",
-                            if entry.key.is_empty() { "<unknown>" } else { &entry.key }
+                            if entry.key.is_empty() {
+                                "<unknown>"
+                            } else {
+                                &entry.key
+                            }
                         ),
                     });
                 }
