@@ -36,7 +36,8 @@ pub mod negative_deposit;
 pub mod no_param_no_auth;
 pub mod no_std;
 pub mod overflow;
-pub mod ownership_transfer;
+pub mod uncapped_fee;
+pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
@@ -108,7 +109,8 @@ pub use negative_deposit::NegativeDepositCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use overflow::UncheckedArithmeticCheck;
-pub use ownership_transfer::OwnershipTransferCheck;
+pub use uncapped_fee::UncappedFeeCheck;
+pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
@@ -231,6 +233,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InstanceRemoveCriticalCheck),
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
-        Box::new(TimestampExpiryNoMinCheck),
+        Box::new(UnlimitedAllowanceCheck),
     ]
 }
