@@ -26,6 +26,8 @@ pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod linear_whitelist_scan;
+pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
@@ -35,7 +37,9 @@ pub mod missing_ttl;
 pub mod negative_deposit;
 pub mod no_param_no_auth;
 pub mod no_std;
+pub mod nonce_increment_order;
 pub mod overflow;
+pub mod ownership_transfer;
 pub mod uncapped_fee;
 pub mod unlimited_allowance;
 pub mod panic_usage;
@@ -57,12 +61,12 @@ pub mod token_transfer_unchecked;
 pub mod transfer_to_self;
 pub mod ttl_arg_order;
 pub mod unauth_address_in_struct;
+pub mod uncapped_slippage;
 pub mod unauth_fee_setter;
 pub mod unauth_sensitive_read;
 pub mod unbounded_batch;
 pub mod unbounded_input_storage;
 pub mod unbounded_storage;
-pub mod uncapped_fee;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 mod util;
@@ -100,6 +104,8 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use linear_whitelist_scan::LinearWhitelistScanCheck;
+pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
 pub use migration_guard::MigrationGuardCheck;
@@ -108,7 +114,9 @@ pub use missing_ttl::MissingTtlExtensionCheck;
 pub use negative_deposit::NegativeDepositCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
+pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use ownership_transfer::OwnershipTransferCheck;
 pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
@@ -129,12 +137,12 @@ pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
 pub use unauth_address_in_struct::UnauthAddressInStructCheck;
+pub use uncapped_slippage::UncappedSlippageCheck;
 pub use unauth_fee_setter::UnauthFeeSetterCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
 pub use unbounded_batch::UnboundedBatchCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
-pub use uncapped_fee::UncappedFeeCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
@@ -234,5 +242,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
         Box::new(UnlimitedAllowanceCheck),
+        Box::new(LockPeriodTruncationCheck),
+        Box::new(LinearWhitelistScanCheck),
+        Box::new(UncappedSlippageCheck),
+        Box::new(NonceIncrementOrderCheck),
     ]
 }
