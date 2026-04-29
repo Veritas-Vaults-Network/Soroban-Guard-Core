@@ -28,11 +28,13 @@ impl Check for InstanceRemoveCriticalCheck {
         let mut out = Vec::new();
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
-            
+
             // Check if function has require_auth
-            let mut auth_scan = AuthScan { has_require_auth: false };
+            let mut auth_scan = AuthScan {
+                has_require_auth: false,
+            };
             auth_scan.visit_block(&method.block);
-            
+
             // Scan for instance().remove() calls on critical keys
             let mut v = RemoveVisitor {
                 fn_name: fn_name.clone(),
@@ -70,7 +72,10 @@ impl Visit<'_> for RemoveVisitor<'_> {
             // Check if the key is a critical literal
             if let Some(key_str) = extract_key_literal(i) {
                 let key_lower = key_str.to_lowercase();
-                if CRITICAL_PATTERNS.iter().any(|pattern| key_lower.contains(pattern)) {
+                if CRITICAL_PATTERNS
+                    .iter()
+                    .any(|pattern| key_lower.contains(pattern))
+                {
                     if !self.has_require_auth {
                         self.out.push(Finding {
                             check_name: CHECK_NAME.to_string(),
@@ -94,14 +99,13 @@ impl Visit<'_> for RemoveVisitor<'_> {
 }
 
 fn is_instance_storage_call(m: &ExprMethodCall) -> bool {
-    receiver_chain_contains(&m.receiver, "instance") && receiver_chain_contains(&m.receiver, "storage")
+    receiver_chain_contains(&m.receiver, "instance")
+        && receiver_chain_contains(&m.receiver, "storage")
 }
 
 fn receiver_chain_contains(expr: &Expr, name: &str) -> bool {
     match expr {
-        Expr::MethodCall(m) => {
-            m.method == name || receiver_chain_contains(&m.receiver, name)
-        }
+        Expr::MethodCall(m) => m.method == name || receiver_chain_contains(&m.receiver, name),
         Expr::Field(f) => receiver_chain_contains(&f.base, name),
         _ => false,
     }
@@ -110,12 +114,18 @@ fn receiver_chain_contains(expr: &Expr, name: &str) -> bool {
 fn extract_key_literal(call: &ExprMethodCall) -> Option<String> {
     if let Some(first_arg) = call.args.first() {
         match first_arg {
-            Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) => {
+            Expr::Lit(ExprLit {
+                lit: Lit::Str(lit_str),
+                ..
+            }) => {
                 return Some(lit_str.value());
             }
             Expr::Reference(r) => {
                 match &*r.expr {
-                    Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) => {
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit_str),
+                        ..
+                    }) => {
                         return Some(lit_str.value());
                     }
                     Expr::Call(c) => {
@@ -124,7 +134,11 @@ fn extract_key_literal(call: &ExprMethodCall) -> Option<String> {
                             if let Some(last_seg) = p.path.segments.last() {
                                 if last_seg.ident == "new" && c.args.len() >= 2 {
                                     if let Some(second_arg) = c.args.iter().nth(1) {
-                                        if let Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) = second_arg {
+                                        if let Expr::Lit(ExprLit {
+                                            lit: Lit::Str(lit_str),
+                                            ..
+                                        }) = second_arg
+                                        {
                                             return Some(lit_str.value());
                                         }
                                     }
@@ -136,7 +150,11 @@ fn extract_key_literal(call: &ExprMethodCall) -> Option<String> {
                         // Handle &Symbol::new(&env, "key") pattern
                         if m.method == "new" && m.args.len() >= 2 {
                             if let Some(second_arg) = m.args.iter().nth(1) {
-                                if let Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) = second_arg {
+                                if let Expr::Lit(ExprLit {
+                                    lit: Lit::Str(lit_str),
+                                    ..
+                                }) = second_arg
+                                {
                                     return Some(lit_str.value());
                                 }
                             }
@@ -151,7 +169,11 @@ fn extract_key_literal(call: &ExprMethodCall) -> Option<String> {
                     if let Some(last_seg) = p.path.segments.last() {
                         if last_seg.ident == "new" && c.args.len() >= 2 {
                             if let Some(second_arg) = c.args.iter().nth(1) {
-                                if let Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) = second_arg {
+                                if let Expr::Lit(ExprLit {
+                                    lit: Lit::Str(lit_str),
+                                    ..
+                                }) = second_arg
+                                {
                                     return Some(lit_str.value());
                                 }
                             }
@@ -163,7 +185,11 @@ fn extract_key_literal(call: &ExprMethodCall) -> Option<String> {
                 // Handle Symbol::new(&env, "key") pattern (without reference)
                 if m.method == "new" && m.args.len() >= 2 {
                     if let Some(second_arg) = m.args.iter().nth(1) {
-                        if let Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) = second_arg {
+                        if let Expr::Lit(ExprLit {
+                            lit: Lit::Str(lit_str),
+                            ..
+                        }) = second_arg
+                        {
                             return Some(lit_str.value());
                         }
                     }

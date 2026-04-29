@@ -32,8 +32,14 @@ impl Check for FloatArithmeticCheck {
 fn is_arithmetic(op: &BinOp) -> bool {
     matches!(
         op,
-        BinOp::Add(_) | BinOp::Sub(_) | BinOp::Mul(_) | BinOp::Div(_)
-            | BinOp::AddAssign(_) | BinOp::SubAssign(_) | BinOp::MulAssign(_) | BinOp::DivAssign(_)
+        BinOp::Add(_)
+            | BinOp::Sub(_)
+            | BinOp::Mul(_)
+            | BinOp::Div(_)
+            | BinOp::AddAssign(_)
+            | BinOp::SubAssign(_)
+            | BinOp::MulAssign(_)
+            | BinOp::DivAssign(_)
     )
 }
 

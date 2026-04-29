@@ -15,7 +15,9 @@ const CHECK_NAME: &str = "broken-pause";
 fn receiver_chain_contains_storage(expr: &Expr) -> bool {
     match expr {
         Expr::MethodCall(m) => {
-            if m.method == "storage" { return true; }
+            if m.method == "storage" {
+                return true;
+            }
             receiver_chain_contains_storage(&m.receiver)
         }
         Expr::Field(f) => receiver_chain_contains_storage(&f.base),
@@ -29,22 +31,34 @@ fn extract_key_str(arg: &Expr) -> String {
         other => other,
     };
     match inner {
-        Expr::Path(p) => p.path.segments.last()
-            .map(|s| s.ident.to_string()).unwrap_or_default(),
+        Expr::Path(p) => p
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default(),
         Expr::Lit(l) => match &l.lit {
             syn::Lit::Str(s) => s.value(),
             _ => String::new(),
         },
-        Expr::Macro(m) => m.mac.tokens.to_string()
-            .trim().trim_matches('"').to_string(),
+        Expr::Macro(m) => m
+            .mac
+            .tokens
+            .to_string()
+            .trim()
+            .trim_matches('"')
+            .to_string(),
         _ => String::new(),
     }
 }
 
 fn key_looks_like_paused(key: &str) -> bool {
     let lower = key.to_lowercase();
-    lower.contains("pause") || lower.contains("halt") || lower.contains("frozen")
-        || lower.contains("stopped") || lower.contains("emergency")
+    lower.contains("pause")
+        || lower.contains("halt")
+        || lower.contains("frozen")
+        || lower.contains("stopped")
+        || lower.contains("emergency")
 }
 
 #[derive(Default)]

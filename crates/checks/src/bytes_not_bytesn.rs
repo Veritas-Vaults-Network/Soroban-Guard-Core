@@ -12,13 +12,21 @@ use syn::{File, FnArg, Pat, Type};
 const CHECK_NAME: &str = "bytes-not-bytesn";
 
 const SENSITIVE_PARAM_NAMES: &[&str] = &[
-    "wasm_hash", "public_key", "signature", "hash", "seed",
-    "pubkey", "sig", "key_hash",
+    "wasm_hash",
+    "public_key",
+    "signature",
+    "hash",
+    "seed",
+    "pubkey",
+    "sig",
+    "key_hash",
 ];
 
 fn param_name_is_sensitive(name: &str) -> bool {
     let lower = name.to_lowercase();
-    SENSITIVE_PARAM_NAMES.iter().any(|s| lower == *s || lower.contains(s))
+    SENSITIVE_PARAM_NAMES
+        .iter()
+        .any(|s| lower == *s || lower.contains(s))
 }
 
 fn type_is_plain_bytes(ty: &Type) -> bool {
@@ -26,8 +34,7 @@ fn type_is_plain_bytes(ty: &Type) -> bool {
         Type::Path(p) => {
             if let Some(seg) = p.path.segments.last() {
                 // `Bytes` with no angle-bracket args → plain variable-length Bytes
-                return seg.ident == "Bytes"
-                    && matches!(seg.arguments, syn::PathArguments::None);
+                return seg.ident == "Bytes" && matches!(seg.arguments, syn::PathArguments::None);
             }
             false
         }

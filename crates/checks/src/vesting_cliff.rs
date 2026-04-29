@@ -129,12 +129,7 @@ fn expr_to_string(expr: &Expr) -> String {
             format!("{}.{}()", expr_to_string(&m.receiver), m.method)
         }
         Expr::Binary(b) => format!("{} {}", expr_to_string(&b.left), expr_to_string(&b.right)),
-        Expr::Lit(l) => match &l.lit {
-            syn::Lit::Str(s) => s.value(),
-            syn::Lit::Int(i) => i.base10_digits().to_string(),
-            syn::Lit::Float(f) => f.base10_digits().to_string(),
-            _ => String::new(),
-        },
+        Expr::Lit(_) => String::from("literal"),
         _ => String::new(),
     }
 }
