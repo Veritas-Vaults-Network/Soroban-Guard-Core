@@ -7,7 +7,7 @@
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
-use syn::{FnArg, File, Pat, PathArguments, Type};
+use syn::{File, FnArg, Pat, PathArguments, Type};
 
 const CHECK_NAME: &str = "timestamp-truncation";
 
@@ -31,8 +31,12 @@ impl Check for TimestampTruncationCheck {
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
             for arg in &method.sig.inputs {
-                let FnArg::Typed(pat_type) = arg else { continue };
-                let Pat::Ident(pat_ident) = pat_type.pat.as_ref() else { continue };
+                let FnArg::Typed(pat_type) = arg else {
+                    continue;
+                };
+                let Pat::Ident(pat_ident) = pat_type.pat.as_ref() else {
+                    continue;
+                };
                 let param_name = pat_ident.ident.to_string();
                 if !TIME_LOCK_NAMES.contains(&param_name.as_str()) {
                     continue;
@@ -60,8 +64,12 @@ impl Check for TimestampTruncationCheck {
 }
 
 fn is_u32(ty: &Type) -> bool {
-    let Type::Path(type_path) = ty else { return false };
-    let Some(seg) = type_path.path.segments.last() else { return false };
+    let Type::Path(type_path) = ty else {
+        return false;
+    };
+    let Some(seg) = type_path.path.segments.last() else {
+        return false;
+    };
     seg.ident == "u32" && matches!(seg.arguments, PathArguments::None)
 }
 

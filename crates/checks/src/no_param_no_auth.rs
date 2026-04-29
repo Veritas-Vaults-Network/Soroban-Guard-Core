@@ -66,7 +66,10 @@ struct BodyScan {
 impl<'ast> Visit<'ast> for BodyScan {
     fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
         let method = i.method.to_string();
-        if method == "set" && receiver_chain_contains_storage(&i.receiver) && self.first_set_line == 0 {
+        if method == "set"
+            && receiver_chain_contains_storage(&i.receiver)
+            && self.first_set_line == 0
+        {
             self.has_storage_set = true;
             self.first_set_line = i.span().start().line;
         }

@@ -142,13 +142,21 @@ fn extract_enum_name_from_panic_with_error(tokens: &proc_macro2::TokenStream) ->
 
 fn has_contracterror_attr(item_enum: &ItemEnum) -> bool {
     item_enum.attrs.iter().any(|attr| {
-        attr.path().segments.last().is_some_and(|s| s.ident == "contracterror")
+        attr.path()
+            .segments
+            .last()
+            .is_some_and(|s| s.ident == "contracterror")
     })
 }
 
 fn has_repr_u32_attr(item_enum: &ItemEnum) -> bool {
     item_enum.attrs.iter().any(|attr| {
-        if attr.path().segments.last().is_some_and(|s| s.ident == "repr") {
+        if attr
+            .path()
+            .segments
+            .last()
+            .is_some_and(|s| s.ident == "repr")
+        {
             if let syn::Meta::List(meta_list) = &attr.meta {
                 meta_list.tokens.to_string().contains("u32")
             } else {

@@ -105,11 +105,7 @@ impl<'ast> Visit<'ast> for VestingScan {
                 }
             }
             BinOp::Add(_) => {
-                let combined = format!(
-                    "{} {}",
-                    expr_to_string(&i.left),
-                    expr_to_string(&i.right)
-                );
+                let combined = format!("{} {}", expr_to_string(&i.left), expr_to_string(&i.right));
                 if combined.contains("start") && combined.contains("cliff") {
                     self.has_start_time_add_in_comparison = true;
                 }
@@ -132,12 +128,8 @@ fn expr_to_string(expr: &Expr) -> String {
         Expr::MethodCall(m) => {
             format!("{}.{}()", expr_to_string(&m.receiver), m.method)
         }
-        Expr::Binary(b) => format!(
-            "{} {}",
-            expr_to_string(&b.left),
-            expr_to_string(&b.right)
-        ),
-        Expr::Lit(l) => format!("{:?}", l),
+        Expr::Binary(b) => format!("{} {}", expr_to_string(&b.left), expr_to_string(&b.right)),
+        Expr::Lit(_) => String::from("literal"),
         _ => String::new(),
     }
 }

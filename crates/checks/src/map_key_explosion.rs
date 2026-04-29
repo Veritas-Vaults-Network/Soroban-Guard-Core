@@ -6,10 +6,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{Expr, ExprLit, ExprMethodCall, File, Lit};
-use std::collections::HashSet;
 
 const CHECK_NAME: &str = "map-key-explosion";
 const MAX_DISTINCT_KEYS: usize = 8;
@@ -65,7 +65,11 @@ fn is_map_set_call(m: &ExprMethodCall) -> bool {
 fn extract_string_literal_key(call: &ExprMethodCall) -> Option<String> {
     if call.args.len() >= 2 {
         if let Some(first_arg) = call.args.first() {
-            if let Expr::Lit(ExprLit { lit: Lit::Str(lit_str), .. }) = first_arg {
+            if let Expr::Lit(ExprLit {
+                lit: Lit::Str(lit_str),
+                ..
+            }) = first_arg
+            {
                 return Some(lit_str.value());
             }
         }

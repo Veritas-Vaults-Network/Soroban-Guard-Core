@@ -90,8 +90,7 @@ mod tests {
 
     #[test]
     fn flags_transfer_amount_binary_expression() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, token, Address, Env};
 
 pub struct C;
@@ -103,16 +102,14 @@ impl C {
         client.transfer(&from, &to, &(price * qty));
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].severity, Severity::High);
     }
 
     #[test]
     fn flags_burn_amount_binary_expression() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, token, Address, Env};
 
 pub struct C;
@@ -124,15 +121,13 @@ impl C {
         client.burn(&from, &(price * qty));
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
     }
 
     #[test]
     fn passes_with_checked_mul_before_transfer() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, token, Address, Env};
 
 pub struct C;
@@ -145,15 +140,13 @@ impl C {
         client.transfer(&from, &to, &amount);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn ignores_env_transfer() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct C;
@@ -164,8 +157,7 @@ impl C {
         env.transfer(&to, &(price * qty));
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 }
