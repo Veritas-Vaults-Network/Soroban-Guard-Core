@@ -29,6 +29,7 @@ pub mod instance_vec_growth;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
+pub mod key_type_mismatch;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
@@ -107,6 +108,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use key_type_mismatch::KeyTypeMismatchCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -255,5 +257,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TierKeyCollisionCheck),
         Box::new(PersistentForTempCheck),
         Box::new(TtlMinZeroCheck),
+        Box::new(KeyTypeMismatchCheck),
     ]
 }
