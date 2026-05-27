@@ -17,6 +17,7 @@ pub mod contracterror_attr;
 pub mod contracttype;
 pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
+pub mod deployer_no_auth;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
 pub mod extend_ttl_in_loop;
@@ -50,6 +51,7 @@ pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
 pub mod storage;
+pub mod storage_has_get_race;
 pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
@@ -94,6 +96,7 @@ pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
+pub use deployer_no_auth::DeployerNoAuthCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
@@ -127,6 +130,7 @@ pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use storage_has_get_race::StorageHasGetRaceCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
@@ -246,5 +250,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(StorageHasGetRaceCheck),
+        Box::new(DeployerNoAuthCheck),
     ]
 }
