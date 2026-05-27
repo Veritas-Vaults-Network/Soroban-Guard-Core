@@ -44,10 +44,7 @@ impl<'ast> Visit<'ast> for UnboundedStorageScan<'_> {
     fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
         // Check for push_back, push_front, insert methods
         let method_name = i.method.to_string();
-        if matches!(
-            method_name.as_str(),
-            "push_back" | "push_front" | "insert"
-        ) {
+        if matches!(method_name.as_str(), "push_back" | "push_front" | "insert") {
             // Check if receiver is from instance storage
             if is_from_instance_storage(&i.receiver) {
                 // For simplicity, we flag all unbounded push/insert operations.
