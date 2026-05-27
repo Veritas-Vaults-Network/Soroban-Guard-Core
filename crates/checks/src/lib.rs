@@ -44,6 +44,7 @@ pub mod uncapped_fee;
 pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
+pub mod persistent_for_temp;
 pub mod reentrancy;
 pub mod secp256k1_unchecked;
 pub mod self_transfer;
@@ -122,6 +123,7 @@ pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
+pub use persistent_for_temp::PersistentForTempCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
@@ -249,5 +251,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
         Box::new(TierKeyCollisionCheck),
+        Box::new(PersistentForTempCheck),
     ]
 }
