@@ -40,6 +40,10 @@ pub mod no_std;
 pub mod nonce_increment_order;
 pub mod overflow;
 pub mod ownership_transfer;
+pub mod persistent_overwrite;
+pub mod instance_set_no_has;
+pub mod storage_type_version;
+pub mod ttl_before_write;
 pub mod uncapped_fee;
 pub mod unlimited_allowance;
 pub mod panic_usage;
@@ -117,6 +121,10 @@ pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use ownership_transfer::OwnershipTransferCheck;
+pub use persistent_overwrite::PersistentOverwriteCheck;
+pub use instance_set_no_has::InstanceSetNoHasCheck;
+pub use storage_type_version::StorageTypeVersionCheck;
+pub use ttl_before_write::TtlBeforeWriteCheck;
 pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(PersistentOverwriteCheck),
+        Box::new(InstanceSetNoHasCheck),
+        Box::new(StorageTypeVersionCheck),
+        Box::new(TtlBeforeWriteCheck),
     ]
 }
