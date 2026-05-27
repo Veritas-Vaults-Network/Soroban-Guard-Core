@@ -29,6 +29,10 @@ pub mod instance_vec_growth;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
+pub mod invoke_func_from_input;
+pub mod invoke_result_untrusted;
+pub mod deploy_salt_predictable;
+pub mod deploy_unverified;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
@@ -104,6 +108,10 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use invoke_func_from_input::InvokeFuncFromInputCheck;
+pub use invoke_result_untrusted::InvokeResultUntrustedCheck;
+pub use deploy_salt_predictable::DeploySaltPredictableCheck;
+pub use deploy_unverified::DeployUnverifiedCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -228,6 +236,10 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(HashAsStorageKeyCheck),
         Box::new(UnauthAddressInStructCheck),
         Box::new(InvokeUncheckedCastCheck),
+        Box::new(InvokeFuncFromInputCheck),
+        Box::new(InvokeResultUntrustedCheck),
+        Box::new(DeploySaltPredictableCheck),
+        Box::new(DeployUnverifiedCheck),
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
         Box::new(StorageTypeConfusionCheck),
