@@ -70,6 +70,7 @@ pub mod unbounded_storage;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 mod util;
+pub mod vec_get_unwrap;
 pub mod vec_push_in_loop;
 pub mod vesting_cliff;
 pub mod weak_randomness;
@@ -144,6 +145,7 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use vec_get_unwrap::VecGetUnwrapCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -246,5 +248,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(VecGetUnwrapCheck),
     ]
 }
