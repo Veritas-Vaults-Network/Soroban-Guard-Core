@@ -1,21 +1,29 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
+pub mod address_str_eq;
 pub mod admin;
 pub mod auth;
+pub mod auth_in_branch;
+pub mod auth_untrusted_storage;
 pub mod contracttype;
 pub mod overflow;
 pub mod panic_usage;
 pub mod storage;
+pub mod transfer_wrong_auth;
 pub mod unbounded_storage;
 pub mod zero_amount;
 mod util;
 
+pub use address_str_eq::AddressStrEqCheck;
 pub use admin::UnprotectedAdminCheck;
 pub use auth::MissingRequireAuthCheck;
+pub use auth_in_branch::AuthInBranchCheck;
+pub use auth_untrusted_storage::AuthUntrustedStorageCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use transfer_wrong_auth::TransferWrongAuthCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use zero_amount::ZeroAmountCheck;
 
@@ -63,5 +71,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MissingContracttypeCheck),
         Box::new(UnboundedStorageCheck),
         Box::new(ZeroAmountCheck),
+        Box::new(TransferWrongAuthCheck),
+        Box::new(AuthInBranchCheck),
+        Box::new(AuthUntrustedStorageCheck),
+        Box::new(AddressStrEqCheck),
     ]
 }
