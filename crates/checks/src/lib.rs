@@ -4,12 +4,15 @@ pub mod admin;
 pub mod admin_in_temp;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
+pub mod address_cmp_instead_of_auth;
 pub mod amount_mul_overflow;
 pub mod assert_for_auth;
 pub mod auth;
 pub mod auth_loop_dos;
 pub mod auth_shadow;
+pub mod auth_temp_storage;
 pub mod authorize_as_contract;
+pub mod authorize_empty;
 pub mod balance_overflow;
 pub mod broken_pause;
 pub mod burn_auth;
@@ -18,6 +21,7 @@ pub mod contracterror_attr;
 pub mod contracttype;
 pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
+pub mod deploy_arg_auth;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
 pub mod extend_ttl_in_loop;
@@ -85,12 +89,15 @@ pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
+pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use assert_for_auth::AssertForAuthCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use auth_loop_dos::AuthLoopDosCheck;
 pub use auth_shadow::AuthShadowCheck;
+pub use auth_temp_storage::AuthTempStorageCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
+pub use authorize_empty::AuthorizeEmptyCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
 pub use burn_auth::BurnAuthCheck;
@@ -99,6 +106,7 @@ pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
+pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
@@ -258,5 +266,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(KeyLengthExceededCheck),
         Box::new(TempForPersistentDataCheck),
         Box::new(RedundantAuthArgsCheck),
+        Box::new(AuthTempStorageCheck),
+        Box::new(DeployArgAuthCheck),
+        Box::new(AddressCmpInsteadOfAuthCheck),
+        Box::new(AuthorizeEmptyCheck),
     ]
 }
