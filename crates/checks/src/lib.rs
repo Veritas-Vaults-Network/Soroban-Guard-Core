@@ -1,5 +1,6 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
+pub mod address_from_str;
 pub mod admin;
 pub mod admin_in_temp;
 pub mod admin_key_removal;
@@ -13,6 +14,7 @@ pub mod balance_overflow;
 pub mod broken_pause;
 pub mod burn_auth;
 pub mod bytes_not_bytesn;
+pub mod bytes_oversized;
 pub mod contracterror_attr;
 pub mod contracttype;
 pub mod current_contract_unwrap;
@@ -22,6 +24,7 @@ pub mod env_in_struct;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod hash_as_storage_key;
+pub mod i128_to_u64;
 pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
@@ -45,6 +48,7 @@ pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
+pub mod runtime_symbol;
 pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
@@ -77,6 +81,7 @@ pub mod withdraw_auth;
 pub mod wrapping_balance_op;
 pub mod zero_amount;
 
+pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
@@ -90,6 +95,7 @@ pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use bytes_not_bytesn::BytesNotBytesNCheck;
+pub use bytes_oversized::BytesOversizedCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
@@ -99,6 +105,7 @@ pub use env_in_struct::EnvInStructCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
+pub use i128_to_u64::I128ToU64Check;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
@@ -122,6 +129,7 @@ pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
+pub use runtime_symbol::RuntimeSymbolCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(RuntimeSymbolCheck),
+        Box::new(BytesOversizedCheck),
+        Box::new(I128ToU64Check),
+        Box::new(AddressFromStrCheck),
     ]
 }
