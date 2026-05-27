@@ -22,6 +22,7 @@ pub mod env_in_struct;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod hash_as_storage_key;
+pub mod i128_signed_abuse;
 pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
@@ -60,6 +61,7 @@ pub mod token_burn_auth;
 pub mod token_transfer_unchecked;
 pub mod transfer_to_self;
 pub mod ttl_arg_order;
+pub mod u32_timestamp;
 pub mod unauth_address_in_struct;
 pub mod uncapped_slippage;
 pub mod unauth_fee_setter;
@@ -99,6 +101,7 @@ pub use env_in_struct::EnvInStructCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
+pub use i128_signed_abuse::I128SignedAbuseCheck;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
@@ -136,6 +139,7 @@ pub use token_burn_auth::TokenBurnAuthCheck;
 pub use token_transfer_unchecked::TokenTransferUncheckedCheck;
 pub use transfer_to_self::TransferToSelfCheck;
 pub use ttl_arg_order::TtlArgOrderCheck;
+pub use u32_timestamp::U32TimestampCheck;
 pub use unauth_address_in_struct::UnauthAddressInStructCheck;
 pub use uncapped_slippage::UncappedSlippageCheck;
 pub use unauth_fee_setter::UnauthFeeSetterCheck;
@@ -246,5 +250,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(I128SignedAbuseCheck),
+        Box::new(U32TimestampCheck),
     ]
 }
