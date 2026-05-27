@@ -8,6 +8,7 @@ pub mod amount_mul_overflow;
 pub mod assert_for_auth;
 pub mod auth;
 pub mod auth_loop_dos;
+pub mod auth_shadow;
 pub mod authorize_as_contract;
 pub mod balance_overflow;
 pub mod broken_pause;
@@ -29,6 +30,7 @@ pub mod instance_vec_growth;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
+pub mod key_length_exceeded;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
@@ -54,6 +56,7 @@ pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
+pub mod temp_for_persistent_data;
 pub mod timestamp_expiry_no_min;
 pub mod timestamp_truncation;
 pub mod token_burn_auth;
@@ -69,6 +72,7 @@ pub mod unbounded_input_storage;
 pub mod unbounded_storage;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
+pub mod redundant_auth_args;
 mod util;
 pub mod vec_push_in_loop;
 pub mod vesting_cliff;
@@ -85,6 +89,7 @@ pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use assert_for_auth::AssertForAuthCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use auth_loop_dos::AuthLoopDosCheck;
+pub use auth_shadow::AuthShadowCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
@@ -104,6 +109,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use key_length_exceeded::KeyLengthExceededCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -130,6 +136,7 @@ pub use storage::UnsafeStoragePatternsCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
+pub use temp_for_persistent_data::TempForPersistentDataCheck;
 pub use timestamp_expiry_no_min::TimestampExpiryNoMinCheck;
 pub use timestamp_truncation::TimestampTruncationCheck;
 pub use token_burn_auth::TokenBurnAuthCheck;
@@ -144,6 +151,7 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use redundant_auth_args::RedundantAuthArgsCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(AuthShadowCheck),
+        Box::new(KeyLengthExceededCheck),
+        Box::new(TempForPersistentDataCheck),
+        Box::new(RedundantAuthArgsCheck),
     ]
 }
