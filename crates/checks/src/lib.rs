@@ -71,6 +71,10 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 mod util;
 pub mod vec_push_in_loop;
+pub mod vec_slice_unchecked;
+pub mod vec_iter_collect;
+pub mod map_linear_scan;
+pub mod loop_host_call;
 pub mod vesting_cliff;
 pub mod weak_randomness;
 pub mod withdraw_auth;
@@ -145,6 +149,10 @@ pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
+pub use vec_slice_unchecked::VecSliceUncheckedCheck;
+pub use vec_iter_collect::VecIterCollectCheck;
+pub use map_linear_scan::MapLinearScanCheck;
+pub use loop_host_call::LoopHostCallCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(VecSliceUncheckedCheck),
+        Box::new(VecIterCollectCheck),
+        Box::new(MapLinearScanCheck),
+        Box::new(LoopHostCallCheck),
     ]
 }
