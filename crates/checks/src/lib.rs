@@ -19,6 +19,8 @@ pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
+pub mod event_full_state;
+pub mod events_no_cache;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod hash_as_storage_key;
@@ -28,6 +30,7 @@ pub mod instance_ttl;
 pub mod instance_vec_growth;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
+pub mod invoke_store_no_event;
 pub mod invoke_unchecked_cast;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
@@ -71,6 +74,7 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 mod util;
 pub mod vec_push_in_loop;
+pub mod vec_mutate_in_loop;
 pub mod vesting_cliff;
 pub mod weak_randomness;
 pub mod withdraw_auth;
@@ -96,6 +100,8 @@ pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use event_full_state::EventFullStateCheck;
+pub use events_no_cache::EventsNoCacheCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
@@ -103,6 +109,7 @@ pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
+pub use invoke_store_no_event::InvokeStoreNoEventCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
@@ -145,6 +152,7 @@ pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
+pub use vec_mutate_in_loop::VecMutateInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(EventsNoCacheCheck),
+        Box::new(InvokeStoreNoEventCheck),
+        Box::new(EventFullStateCheck),
+        Box::new(VecMutateInLoopCheck),
     ]
 }
