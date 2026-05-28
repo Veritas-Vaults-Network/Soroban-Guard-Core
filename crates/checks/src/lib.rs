@@ -41,6 +41,7 @@ pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
 pub mod key_length_exceeded;
 pub mod map_key_explosion;
+pub mod map_get_unwrap;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
 pub mod mint_auth;
@@ -139,6 +140,7 @@ pub use key_prefix_collision::KeyPrefixCollisionCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
+pub use map_get_unwrap::MapGetUnwrapCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
 pub use migration_guard::MigrationGuardCheck;
 pub use mint_auth::MintAuthCheck;
@@ -286,6 +288,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WrappingBalanceOpCheck),
         Box::new(UnauthSensitiveReadCheck),
         Box::new(InstanceRemoveCriticalCheck),
+        Box::new(MapGetUnwrapCheck),
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
         Box::new(UnlimitedAllowanceCheck),
