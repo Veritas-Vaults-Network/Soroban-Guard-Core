@@ -29,7 +29,9 @@ pub mod instance_vec_growth;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
+pub mod loop_bound_no_cap;
 pub mod map_key_explosion;
+pub mod nested_loop_storage;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
 pub mod mint_auth;
@@ -45,6 +47,7 @@ pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod reentrancy;
+pub mod recursion_no_depth;
 pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
@@ -73,6 +76,7 @@ mod util;
 pub mod vec_push_in_loop;
 pub mod vesting_cliff;
 pub mod weak_randomness;
+pub mod while_host_condition;
 pub mod withdraw_auth;
 pub mod wrapping_balance_op;
 pub mod zero_amount;
@@ -106,12 +110,14 @@ pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
+pub use loop_bound_no_cap::LoopBoundNoCapCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
 pub use migration_guard::MigrationGuardCheck;
 pub use mint_auth::MintAuthCheck;
 pub use missing_ttl::MissingTtlExtensionCheck;
 pub use negative_deposit::NegativeDepositCheck;
+pub use nested_loop_storage::NestedLoopStorageCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
@@ -122,6 +128,7 @@ pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use reentrancy::ReentrancyCheck;
+pub use recursion_no_depth::RecursionNoDepthCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
@@ -147,6 +154,7 @@ pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
+pub use while_host_condition::WhileHostConditionCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
 pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(NestedLoopStorageCheck),
+        Box::new(LoopBoundNoCapCheck),
+        Box::new(RecursionNoDepthCheck),
+        Box::new(WhileHostConditionCheck),
     ]
 }
