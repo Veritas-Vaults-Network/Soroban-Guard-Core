@@ -3,6 +3,10 @@
 pub mod address_from_str;
 pub mod admin;
 pub mod admin_in_temp;
+pub mod admin_no_event;
+pub mod balance_negative_check;
+pub mod mul_before_div;
+pub mod token_shared_storage;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
 pub mod address_cmp_instead_of_auth;
@@ -27,8 +31,12 @@ pub mod debug_entrypoint;
 pub mod deploy_arg_auth;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
+pub mod event_duplicate;
+pub mod event_no_topics;
+pub mod event_topic_runtime_string;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
+pub mod host_result_ignored;
 pub mod hash_as_storage_key;
 pub mod i128_to_u64;
 pub mod instance_domain_mixing;
@@ -38,9 +46,11 @@ pub mod instance_vec_growth;
 pub mod key_prefix_collision;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
+pub mod invoke_store_no_event;
 pub mod invoke_unchecked_cast;
 pub mod key_length_exceeded;
 pub mod map_key_explosion;
+pub mod map_get_unwrap;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
 pub mod mint_auth;
@@ -50,6 +60,7 @@ pub mod no_param_no_auth;
 pub mod no_std;
 pub mod nonce_increment_order;
 pub mod overflow;
+pub mod ownership_no_event;
 pub mod ownership_transfer;
 pub mod persistent_overwrite;
 pub mod instance_set_no_has;
@@ -92,9 +103,12 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 pub mod redundant_auth_args;
 mod util;
+pub mod vec_get_unwrap;
 pub mod vec_push_in_loop;
+pub mod vec_mutate_in_loop;
 pub mod vesting_cliff;
 pub mod weak_randomness;
+pub mod while_host_condition;
 pub mod withdraw_auth;
 pub mod wrapping_balance_op;
 pub mod zero_amount;
@@ -106,6 +120,10 @@ pub mod renounce_no_backup;
 pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
+pub use admin_no_event::AdminNoEventCheck;
+pub use balance_negative_check::BalanceNegativeCheck;
+pub use mul_before_div::MulBeforeDivCheck;
+pub use token_shared_storage::TokenSharedStorageCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
@@ -130,28 +148,37 @@ pub use debug_entrypoint::DebugEntrypointCheck;
 pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use event_duplicate::EventDuplicateCheck;
+pub use event_no_topics::EventNoTopicsCheck;
+pub use event_topic_runtime_string::EventTopicRuntimeStringCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
+pub use host_result_ignored::HostResultIgnoredCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
 pub use i128_to_u64::I128ToU64Check;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
+pub use invoke_store_no_event::InvokeStoreNoEventCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
 pub use key_prefix_collision::KeyPrefixCollisionCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
+pub use loop_bound_no_cap::LoopBoundNoCapCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
+pub use map_get_unwrap::MapGetUnwrapCheck;
 pub use map_user_key_bloat::MapUserKeyBloatCheck;
 pub use migration_guard::MigrationGuardCheck;
 pub use mint_auth::MintAuthCheck;
 pub use missing_ttl::MissingTtlExtensionCheck;
 pub use negative_deposit::NegativeDepositCheck;
+pub use nested_loop_storage::NestedLoopStorageCheck;
 pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use ownership_no_event::OwnershipNoEventCheck;
 pub use ownership_transfer::OwnershipTransferCheck;
 pub use persistent_overwrite::PersistentOverwriteCheck;
 pub use instance_set_no_has::InstanceSetNoHasCheck;
@@ -192,8 +219,10 @@ pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
 pub use redundant_auth_args::RedundantAuthArgsCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
+pub use vec_mutate_in_loop::VecMutateInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
+pub use while_host_condition::WhileHostConditionCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
 pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
@@ -283,6 +312,10 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(HashAsStorageKeyCheck),
         Box::new(UnauthAddressInStructCheck),
         Box::new(InvokeUncheckedCastCheck),
+        Box::new(InvokeFuncFromInputCheck),
+        Box::new(InvokeResultUntrustedCheck),
+        Box::new(DeploySaltPredictableCheck),
+        Box::new(DeployUnverifiedCheck),
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
         Box::new(StorageTypeConfusionCheck),
@@ -294,6 +327,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WrappingBalanceOpCheck),
         Box::new(UnauthSensitiveReadCheck),
         Box::new(InstanceRemoveCriticalCheck),
+        Box::new(MapGetUnwrapCheck),
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
         Box::new(UnlimitedAllowanceCheck),
@@ -301,10 +335,10 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
-        Box::new(DecimalsMismatchCheck),
-        Box::new(ZeroTransferEventCheck),
-        Box::new(OwnershipImmediateCheck),
-        Box::new(RenounceNoBackupCheck),
+        Box::new(BalanceNegativeCheck),
+        Box::new(MulBeforeDivCheck),
+        Box::new(TokenSharedStorageCheck),
+        Box::new(AdminNoEventCheck),
         Box::new(TierKeyCollisionCheck),
     ]
 }
