@@ -70,6 +70,7 @@ pub mod unbounded_storage;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 mod util;
+pub mod val_unchecked_convert;
 pub mod vec_pop_unwrap;
 pub mod vec_push_in_loop;
 pub mod vesting_cliff;
@@ -145,6 +146,7 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use val_unchecked_convert::ValUncheckedConvertCheck;
 pub use vec_pop_unwrap::VecPopUnwrapCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
@@ -249,5 +251,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
         Box::new(VecPopUnwrapCheck),
+        Box::new(ValUncheckedConvertCheck),
     ]
 }
