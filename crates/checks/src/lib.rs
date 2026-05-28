@@ -11,6 +11,7 @@ pub mod auth_loop_dos;
 pub mod authorize_as_contract;
 pub mod balance_overflow;
 pub mod broken_pause;
+pub mod bump_to_ttl;
 pub mod burn_auth;
 pub mod bytes_not_bytesn;
 pub mod contracterror_attr;
@@ -26,6 +27,7 @@ pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod key_prefix_collision;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
@@ -48,16 +50,20 @@ pub mod uncapped_fee;
 pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
+pub mod persistent_for_temp;
 pub mod reentrancy;
 pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
 pub mod storage;
+pub mod storage_has_get_mismatch;
+pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
+pub mod tier_key_collision;
 pub mod timestamp_expiry_no_min;
 pub mod timestamp_truncation;
 pub mod token_burn_auth;
@@ -92,6 +98,7 @@ pub use auth_loop_dos::AuthLoopDosCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
+pub use bump_to_ttl::BumpToTtlCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use bytes_not_bytesn::BytesNotBytesNCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
@@ -108,6 +115,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use key_prefix_collision::KeyPrefixCollisionCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -129,15 +137,19 @@ pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
+pub use persistent_for_temp::PersistentForTempCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use storage_has_get_mismatch::StorageHasGetMismatchCheck;
+pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
+pub use tier_key_collision::TierKeyCollisionCheck;
 pub use timestamp_expiry_no_min::TimestampExpiryNoMinCheck;
 pub use timestamp_truncation::TimestampTruncationCheck;
 pub use token_burn_auth::TokenBurnAuthCheck;
@@ -254,9 +266,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
-        Box::new(PersistentOverwriteCheck),
-        Box::new(InstanceSetNoHasCheck),
-        Box::new(StorageTypeVersionCheck),
-        Box::new(TtlBeforeWriteCheck),
+        Box::new(TierKeyCollisionCheck),
     ]
 }
