@@ -19,6 +19,9 @@ pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
+pub mod event_before_auth;
+pub mod event_topic_duplicates;
+pub mod event_val_type;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod hash_as_storage_key;
@@ -39,6 +42,7 @@ pub mod no_param_no_auth;
 pub mod no_std;
 pub mod nonce_increment_order;
 pub mod overflow;
+pub mod ownership_no_event;
 pub mod ownership_transfer;
 pub mod uncapped_fee;
 pub mod unlimited_allowance;
@@ -96,6 +100,9 @@ pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use event_before_auth::EventBeforeAuthCheck;
+pub use event_topic_duplicates::EventTopicDuplicatesCheck;
+pub use event_val_type::EventValTypeCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
@@ -116,6 +123,7 @@ pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use ownership_no_event::OwnershipNoEventCheck;
 pub use ownership_transfer::OwnershipTransferCheck;
 pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(OwnershipNoEventCheck),
+        Box::new(EventValTypeCheck),
+        Box::new(EventBeforeAuthCheck),
+        Box::new(EventTopicDuplicatesCheck),
     ]
 }
