@@ -2,6 +2,8 @@
 
 pub mod address_from_str;
 pub mod admin;
+pub mod admin_no_group_auth;
+pub mod admin_zero_address;
 pub mod admin_in_temp;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
@@ -51,6 +53,8 @@ pub mod no_param_no_auth;
 pub mod no_std;
 pub mod nonce_increment_order;
 pub mod overflow;
+pub mod ownership_no_approval_invalidation;
+pub mod ownership_pending_not_cleared;
 pub mod ownership_transfer;
 pub mod persistent_overwrite;
 pub mod instance_set_no_has;
@@ -103,6 +107,8 @@ pub mod zero_amount;
 
 pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
+pub use admin_no_group_auth::AdminNoGroupAuthCheck;
+pub use admin_zero_address::AdminZeroAddressCheck;
 pub use admin_in_temp::AdminInTempCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
@@ -151,6 +157,8 @@ pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
+pub use ownership_no_approval_invalidation::OwnershipNoApprovalInvalidationCheck;
+pub use ownership_pending_not_cleared::OwnershipPendingNotClearedCheck;
 pub use ownership_transfer::OwnershipTransferCheck;
 pub use persistent_overwrite::PersistentOverwriteCheck;
 pub use instance_set_no_has::InstanceSetNoHasCheck;
@@ -302,5 +310,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
         Box::new(TierKeyCollisionCheck),
+        Box::new(AdminZeroAddressCheck),
+        Box::new(AdminNoGroupAuthCheck),
+        Box::new(OwnershipPendingNotClearedCheck),
+        Box::new(OwnershipNoApprovalInvalidationCheck),
     ]
 }
