@@ -11,6 +11,7 @@ pub mod auth_loop_dos;
 pub mod authorize_as_contract;
 pub mod balance_overflow;
 pub mod broken_pause;
+pub mod bump_to_ttl;
 pub mod burn_auth;
 pub mod bytes_not_bytesn;
 pub mod contracterror_attr;
@@ -26,6 +27,7 @@ pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod key_prefix_collision;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
@@ -51,6 +53,8 @@ pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
 pub mod storage;
+pub mod storage_has_get_mismatch;
+pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
@@ -90,6 +94,7 @@ pub use auth_loop_dos::AuthLoopDosCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
+pub use bump_to_ttl::BumpToTtlCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use bytes_not_bytesn::BytesNotBytesNCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
@@ -106,6 +111,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
+pub use key_prefix_collision::KeyPrefixCollisionCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -130,6 +136,8 @@ pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use storage_has_get_mismatch::StorageHasGetMismatchCheck;
+pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
@@ -251,6 +259,5 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
         Box::new(TierKeyCollisionCheck),
-        Box::new(PersistentForTempCheck),
     ]
 }
