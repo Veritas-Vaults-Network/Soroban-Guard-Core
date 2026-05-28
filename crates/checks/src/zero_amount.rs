@@ -7,7 +7,7 @@ use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{BinOp, Expr, ExprBinary, FnArg, File, Pat, PatType};
+use syn::{BinOp, Expr, ExprBinary, File, FnArg, Pat, PatType};
 
 const CHECK_NAME: &str = "zero-amount-transfer";
 

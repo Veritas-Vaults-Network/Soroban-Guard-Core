@@ -197,8 +197,9 @@ impl MyContract {
         let check = MissingContracttypeCheck;
         let findings = check.run(&file, code);
         assert!(findings.len() >= 1);
-        assert!(findings.iter().any(|f| f.function_name.is_empty()
-            && f.description.contains("MyData")));
+        assert!(findings
+            .iter()
+            .any(|f| f.function_name.is_empty() && f.description.contains("MyData")));
     }
 
     #[test]
