@@ -1,5 +1,6 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
+pub mod allowance_clear;
 pub mod address_from_str;
 pub mod admin;
 pub mod admin_in_temp;
@@ -117,6 +118,7 @@ pub mod zero_transfer_event;
 pub mod ownership_immediate;
 pub mod renounce_no_backup;
 
+pub use allowance_clear::AllowanceClearCheck;
 pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
@@ -331,6 +333,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MapUserKeyBloatCheck),
         Box::new(TimestampTruncationCheck),
         Box::new(UnlimitedAllowanceCheck),
+        Box::new(AllowanceClearCheck),
         Box::new(LockPeriodTruncationCheck),
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
