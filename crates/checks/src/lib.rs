@@ -19,8 +19,12 @@ pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
+pub mod event_duplicate;
+pub mod event_no_topics;
+pub mod event_topic_runtime_string;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
+pub mod host_result_ignored;
 pub mod hash_as_storage_key;
 pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
@@ -96,8 +100,12 @@ pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
+pub use event_duplicate::EventDuplicateCheck;
+pub use event_no_topics::EventNoTopicsCheck;
+pub use event_topic_runtime_string::EventTopicRuntimeStringCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
+pub use host_result_ignored::HostResultIgnoredCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(HostResultIgnoredCheck),
+        Box::new(EventNoTopicsCheck),
+        Box::new(EventDuplicateCheck),
+        Box::new(EventTopicRuntimeStringCheck),
     ]
 }
