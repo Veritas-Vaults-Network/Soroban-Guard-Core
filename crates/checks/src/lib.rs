@@ -112,6 +112,10 @@ pub mod while_host_condition;
 pub mod withdraw_auth;
 pub mod wrapping_balance_op;
 pub mod zero_amount;
+pub mod decimals_mismatch;
+pub mod zero_transfer_event;
+pub mod ownership_immediate;
+pub mod renounce_no_backup;
 
 pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
@@ -222,6 +226,10 @@ pub use while_host_condition::WhileHostConditionCheck;
 pub use withdraw_auth::WithdrawAuthCheck;
 pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
+pub use decimals_mismatch::DecimalsMismatchCheck;
+pub use zero_transfer_event::ZeroTransferEventCheck;
+pub use ownership_immediate::OwnershipImmediateCheck;
+pub use renounce_no_backup::RenounceNoBackupCheck;
 
 use serde::Serialize;
 use syn::File;
