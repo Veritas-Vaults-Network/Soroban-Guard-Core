@@ -31,6 +31,7 @@ pub mod debug_entrypoint;
 pub mod decimals_mismatch;
 pub mod deploy_arg_auth;
 pub mod deploy_arg_auth;
+pub mod deploy_no_event;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
 pub mod event_duplicate;
@@ -322,6 +323,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InvokeResultUntrustedCheck),
         Box::new(DeploySaltPredictableCheck),
         Box::new(DeployUnverifiedCheck),
+        Box::new(DeployNoEventCheck),
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
         Box::new(StorageTypeConfusionCheck),
