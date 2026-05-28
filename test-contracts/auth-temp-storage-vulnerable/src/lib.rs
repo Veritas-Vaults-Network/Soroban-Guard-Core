@@ -1,19 +1,22 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Address, Env};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env};
 
 #[contract]
 pub struct AuthTempStorageVulnerable;
 
 #[contractimpl]
 impl AuthTempStorageVulnerable {
-    /// ❌ Admin read from temporary storage may have expired (TTL elapsed).
-    pub fn transfer(env: Env, amount: i128) {
+    /// Reads admin from temporary storage and uses it in require_auth.
+    pub fn vulnerable_temp_auth(env: Env) {
         let admin: Address = env
             .storage()
             .temporary()
-            .get(&"admin")
-            .unwrap_or_else(|| Address::from_contract_id(&env, &env.current_contract_address()));
-        admin.require_auth();
-        let _ = amount;
+            .get(&symbol_short!("admin"))
+            .unwrap();
+        // Vulnerable: admin may have expired from temporary storage
+        env.require_auth(&admin);
+        env.storage()
+            .instance()
+            .set(&symbol_short!("data"), &42u32);
     }
 }

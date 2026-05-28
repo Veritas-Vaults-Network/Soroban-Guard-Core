@@ -1,13 +1,15 @@
-//! require_auth called before deployer().deploy() but deploy args not covered by auth.
+//! require_auth called before deployer().deploy() but deploy arguments not covered by auth.
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Block, Expr, ExprMethodCall, File, Stmt};
+use syn::{Expr, ExprMethodCall, File, FnArg, Pat};
 
 const CHECK_NAME: &str = "deploy-arg-auth";
 
+/// Detects `deployer().deploy(wasm_hash, salt)` calls where arguments are function parameters
+/// but the preceding require_auth doesn't bind to those parameters.
 pub struct DeployArgAuthCheck;
 
 impl Check for DeployArgAuthCheck {
@@ -20,207 +22,145 @@ impl Check for DeployArgAuthCheck {
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
             let param_names = extract_param_names(&method.sig.inputs);
-            let mut v = DeployAuthVisitor {
+            let mut scan = DeployArgScan {
                 fn_name: fn_name.clone(),
-                param_names,
+                param_names: param_names.clone(),
                 out: &mut out,
+                require_auth_for_args_found: false,
             };
-            v.visit_block(&method.block);
+            scan.visit_block(&method.block);
         }
         out
     }
 }
 
-fn extract_param_names(inputs: &syn::punctuated::Punctuated<syn::FnArg, syn::token::Comma>) -> Vec<String> {
+fn extract_param_names(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>) -> Vec<String> {
     let mut names = Vec::new();
     for arg in inputs {
-        if let syn::FnArg::Typed(pt) = arg {
-            if let syn::Pat::Ident(ident) = &*pt.pat {
-                names.push(ident.ident.to_string());
+        if let FnArg::Typed(pat_type) = arg {
+            if let Pat::Ident(pat_ident) = &*pat_type.pat {
+                names.push(pat_ident.ident.to_string());
             }
         }
     }
     names
 }
 
-struct DeployAuthVisitor<'a> {
+fn is_require_auth_for_args_call(m: &ExprMethodCall) -> bool {
+    m.method == "require_auth_for_args" && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
+}
+
+fn is_deployer_deploy_call(m: &ExprMethodCall) -> bool {
+    m.method == "deploy"
+        && matches!(&*m.receiver, Expr::MethodCall(inner) if inner.method == "deployer" && matches!(&*inner.receiver, Expr::Path(p) if p.path.is_ident("env")))
+}
+
+fn arg_is_param(expr: &Expr, param_names: &[String]) -> bool {
+    match expr {
+        Expr::Path(p) => {
+            if let Some(seg) = p.path.segments.last() {
+                param_names.contains(&seg.ident.to_string())
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
+struct DeployArgScan<'a> {
     fn_name: String,
     param_names: Vec<String>,
     out: &'a mut Vec<Finding>,
+    require_auth_for_args_found: bool,
 }
 
-impl Visit<'_> for DeployAuthVisitor<'_> {
-    fn visit_block(&mut self, i: &Block) {
-        let mut has_require_auth = false;
-        let mut deploy_call_line = None;
-
-        for stmt in &i.stmts {
-            if let Stmt::Expr(expr, _) | Stmt::Semi(expr, _) = stmt {
-                if is_require_auth_call(expr) {
-                    has_require_auth = true;
-                }
-                if let Some(line) = check_deploy_with_params(expr, &self.param_names) {
-                    deploy_call_line = Some(line);
-                }
-            }
+impl<'ast> Visit<'ast> for DeployArgScan<'_> {
+    fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
+        if is_require_auth_for_args_call(i) {
+            self.require_auth_for_args_found = true;
         }
 
-        if has_require_auth && deploy_call_line.is_some() {
-            if !has_require_auth_for_args(&i.stmts, &self.param_names) {
-                self.out.push(Finding {
-                    check_name: CHECK_NAME.to_string(),
-                    severity: Severity::High,
-                    file_path: String::new(),
-                    line: deploy_call_line.unwrap(),
-                    function_name: self.fn_name.clone(),
-                    description: format!(
-                        "Method `{}` calls `env.deployer().deploy()` with function parameters, \
-                         but only calls `require_auth()` without binding to the deploy arguments. \
-                         Use `require_auth_for_args()` to bind auth to wasm_hash and salt.",
-                        self.fn_name
-                    ),
-                });
-            }
-        }
-
-        visit::visit_block(self, i);
-    }
-}
-
-fn is_require_auth_call(expr: &Expr) -> bool {
-    if let Expr::MethodCall(m) = expr {
-        m.method == "require_auth"
-    } else {
-        false
-    }
-}
-
-fn check_deploy_with_params(expr: &Expr, param_names: &[String]) -> Option<usize> {
-    if let Expr::MethodCall(m) = expr {
-        if m.method == "deploy" {
-            for arg in &m.args {
-                if let Expr::Path(p) = arg {
-                    if let Some(ident) = p.path.segments.last() {
-                        if param_names.contains(&ident.ident.to_string()) {
-                            return Some(m.span().start().line);
-                        }
-                    }
+        if is_deployer_deploy_call(i) && !self.require_auth_for_args_found {
+            // Check if any deploy argument is a function parameter
+            if i.args.len() >= 2 {
+                let has_param_arg = i.args.iter().take(2).any(|arg| arg_is_param(arg, &self.param_names));
+                if has_param_arg {
+                    self.out.push(Finding {
+                        check_name: CHECK_NAME.to_string(),
+                        severity: Severity::High,
+                        file_path: String::new(),
+                        line: i.span().start().line,
+                        function_name: self.fn_name.clone(),
+                        description: format!(
+                            "Function `{}` calls `deployer().deploy()` with user-supplied parameters but uses `require_auth()` \
+                             instead of `require_auth_for_args()`. An attacker can reuse the auth to deploy with different parameters.",
+                            self.fn_name
+                        ),
+                    });
                 }
             }
         }
-        check_deploy_with_params(&m.receiver, param_names)
-    } else if let Expr::Call(c) = expr {
-        for arg in &c.args {
-            if let Expr::Path(p) = arg {
-                if let Some(ident) = p.path.segments.last() {
-                    if param_names.contains(&ident.ident.to_string()) {
-                        return Some(c.span().start().line);
-                    }
-                }
-            }
-        }
-        None
-    } else {
-        None
-    }
-}
 
-fn has_require_auth_for_args(stmts: &[Stmt], param_names: &[String]) -> bool {
-    for stmt in stmts {
-        if let Stmt::Expr(expr, _) | Stmt::Semi(expr, _) = stmt {
-            if is_require_auth_for_args_with_params(expr, param_names) {
-                return true;
-            }
-        }
+        visit::visit_expr_method_call(self, i);
     }
-    false
-}
-
-fn is_require_auth_for_args_with_params(expr: &Expr, param_names: &[String]) -> bool {
-    if let Expr::MethodCall(m) = expr {
-        if m.method == "require_auth_for_args" {
-            for arg in &m.args {
-                if let Expr::Tuple(t) = arg {
-                    for elem in &t.elems {
-                        if let Expr::Path(p) = elem {
-                            if let Some(ident) = p.path.segments.last() {
-                                if param_names.contains(&ident.ident.to_string()) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Check;
     use syn::parse_file;
 
     #[test]
-    fn flags_deploy_with_param_and_require_auth() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Env, BytesN};
-pub struct C;
+    fn detects_deploy_with_param_args_and_require_auth() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn bad(env: Env, wasm_hash: BytesN<32>, salt: u64) {
+impl MyContract {
+    pub fn vulnerable(env: Env, wasm_hash: BytesN<32>, salt: u64) {
         env.require_auth();
         env.deployer().deploy(wasm_hash, salt);
     }
 }
-"#,
-        )?;
-        let hits = DeployArgAuthCheck.run(&file, "");
-        assert_eq!(hits.len(), 1);
-        assert_eq!(hits[0].severity, Severity::High);
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = DeployArgAuthCheck;
+        let findings = check.run(&file, code);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].check_name, CHECK_NAME);
+        assert_eq!(findings[0].severity, Severity::High);
     }
 
     #[test]
-    fn no_finding_with_require_auth_for_args() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Env, BytesN};
-pub struct C;
+    fn allows_deploy_with_require_auth_for_args() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn good(env: Env, wasm_hash: BytesN<32>, salt: u64) {
+impl MyContract {
+    pub fn safe(env: Env, wasm_hash: BytesN<32>, salt: u64) {
         env.require_auth_for_args((wasm_hash, salt));
         env.deployer().deploy(wasm_hash, salt);
     }
 }
-"#,
-        )?;
-        let hits = DeployArgAuthCheck.run(&file, "");
-        assert!(hits.is_empty());
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = DeployArgAuthCheck;
+        let findings = check.run(&file, code);
+        assert!(findings.is_empty());
     }
 
     #[test]
-    fn no_finding_for_literal_args() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Env};
-pub struct C;
+    fn allows_deploy_with_literal_args() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn good(env: Env) {
+impl MyContract {
+    pub fn safe(env: Env) {
         env.require_auth();
-        env.deployer().deploy(&[1, 2, 3], 0u64);
+        env.deployer().deploy(some_hash, 42u64);
     }
 }
-"#,
-        )?;
-        let hits = DeployArgAuthCheck.run(&file, "");
-        assert!(hits.is_empty());
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = DeployArgAuthCheck;
+        let findings = check.run(&file, code);
+        assert!(findings.is_empty());
     }
 }

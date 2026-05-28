@@ -1,25 +1,16 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, Address, Env};
+use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env};
 
 #[contract]
-pub struct AddressCmpInsteadOfAuthSafe;
+pub struct AddressCmpSafe;
 
 #[contractimpl]
-impl AddressCmpInsteadOfAuthSafe {
-    /// ✅ Uses require_auth() for proper signature verification.
-    pub fn transfer(env: Env, amount: i128) {
-        env.require_auth();
-        let _ = amount;
-    }
-
-    /// ✅ Reads admin and calls require_auth on it.
-    pub fn withdraw(env: Env, amount: i128) {
-        let admin: Address = env
-            .storage()
-            .persistent()
-            .get(&"admin")
-            .unwrap_or_else(|| Address::from_contract_id(&env, &env.current_contract_address()));
-        admin.require_auth();
-        let _ = amount;
+impl AddressCmpSafe {
+    /// Uses require_auth for proper authorization.
+    pub fn safe_auth(env: Env, caller: Address) {
+        env.require_auth(&caller);
+        env.storage()
+            .instance()
+            .set(&symbol_short!("data"), &42u32);
     }
 }

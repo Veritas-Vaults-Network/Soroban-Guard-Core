@@ -6,10 +6,10 @@ pub struct DeployArgAuthVulnerable;
 
 #[contractimpl]
 impl DeployArgAuthVulnerable {
-    /// ❌ require_auth() doesn't bind to deploy arguments.
-    /// Attacker can reuse auth to deploy with different wasm_hash or salt.
-    pub fn deploy_contract(env: Env, wasm_hash: BytesN<32>, salt: u64) {
+    /// Calls require_auth but deploy args are user-supplied parameters.
+    pub fn vulnerable_deploy(env: Env, wasm_hash: BytesN<32>, salt: u64) {
         env.require_auth();
+        // Vulnerable: auth doesn't bind to wasm_hash and salt
         env.deployer().deploy(wasm_hash, salt);
     }
 }

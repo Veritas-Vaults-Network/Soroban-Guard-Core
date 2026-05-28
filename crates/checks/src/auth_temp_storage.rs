@@ -1,13 +1,14 @@
-//! require_auth called with address from temporary storage (expired risk).
+//! require_auth called with address from temporary storage (expiration risk).
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Block, Expr, ExprMethodCall, File};
+use syn::{Expr, ExprMethodCall, File, Ident};
 
 const CHECK_NAME: &str = "auth-temp-storage";
 
+/// Detects `require_auth(some_addr)` where `some_addr` was obtained from temporary() storage.
 pub struct AuthTempStorageCheck;
 
 impl Check for AuthTempStorageCheck {
@@ -19,151 +20,147 @@ impl Check for AuthTempStorageCheck {
         let mut out = Vec::new();
         for method in contractimpl_functions(file) {
             let fn_name = method.sig.ident.to_string();
-            let temp_vars = extract_temp_storage_vars(&method.block);
-            let mut v = AuthTempVisitor {
+            let mut scan = AuthTempScan {
                 fn_name: fn_name.clone(),
-                temp_vars,
                 out: &mut out,
+                temp_storage_vars: Vec::new(),
             };
-            v.visit_block(&method.block);
+            scan.visit_block(&method.block);
         }
         out
     }
 }
 
-fn extract_temp_storage_vars(block: &Block) -> Vec<String> {
-    let mut vars = Vec::new();
-    let mut v = TempVarExtractor { vars: &mut vars };
-    v.visit_block(block);
-    vars
+fn is_temp_storage_get(m: &ExprMethodCall) -> bool {
+    m.method == "get"
+        && matches!(&*m.receiver, Expr::MethodCall(inner) if inner.method == "temporary" && matches!(&*inner.receiver, Expr::MethodCall(storage) if storage.method == "storage" && matches!(&*storage.receiver, Expr::Path(p) if p.path.is_ident("env"))))
 }
 
-struct TempVarExtractor<'a> {
-    vars: &'a mut Vec<String>,
+fn is_require_auth_call(m: &ExprMethodCall) -> bool {
+    (m.method == "require_auth" || m.method == "require_auth_for_args")
+        && matches!(&*m.receiver, Expr::Path(p) if p.path.is_ident("env"))
 }
 
-impl Visit<'_> for TempVarExtractor<'_> {
-    fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
-        if i.method == "get" && receiver_chain_contains_temporary(&i.receiver) {
-            // This is a temporary().get() call - track the variable it's assigned to
-            // We'll detect this in the parent context
+fn extract_var_name(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Path(p) => {
+            if let Some(seg) = p.path.segments.last() {
+                Some(seg.ident.to_string())
+            } else {
+                None
+            }
         }
+        _ => None,
+    }
+}
+
+struct AuthTempScan<'a> {
+    fn_name: String,
+    out: &'a mut Vec<Finding>,
+    temp_storage_vars: Vec<String>,
+}
+
+impl<'ast> Visit<'ast> for AuthTempScan<'_> {
+    fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
+        // Track variables assigned from temporary storage
+        if is_temp_storage_get(i) {
+            // This is a temporary storage get call
+            // We need to track if it's assigned to a variable
+            // For now, we'll mark this call as a temp storage source
+        }
+
+        // Check for require_auth calls with temp storage variables
+        if is_require_auth_call(i) && !i.args.is_empty() {
+            if let Some(var_name) = extract_var_name(&i.args[0]) {
+                if self.temp_storage_vars.contains(&var_name) {
+                    self.out.push(Finding {
+                        check_name: CHECK_NAME.to_string(),
+                        severity: Severity::High,
+                        file_path: String::new(),
+                        line: i.span().start().line,
+                        function_name: self.fn_name.clone(),
+                        description: format!(
+                            "Function `{}` calls `require_auth()` with an address from temporary storage. \
+                             The address may have expired (TTL elapsed), causing auth to fail silently or authenticate against a default address.",
+                            self.fn_name
+                        ),
+                    });
+                }
+            }
+        }
+
         visit::visit_expr_method_call(self, i);
     }
-}
 
-fn receiver_chain_contains_temporary(expr: &Expr) -> bool {
-    match expr {
-        Expr::MethodCall(m) => {
-            m.method == "temporary" || receiver_chain_contains_temporary(&m.receiver)
-        }
-        Expr::Field(f) => receiver_chain_contains_temporary(&f.base),
-        _ => false,
-    }
-}
-
-struct AuthTempVisitor<'a> {
-    fn_name: String,
-    temp_vars: Vec<String>,
-    out: &'a mut Vec<Finding>,
-}
-
-impl Visit<'_> for AuthTempVisitor<'_> {
-    fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
-        if i.method == "require_auth" {
-            if let Some(arg) = i.args.first() {
-                if let Expr::Path(p) = arg {
-                    if let Some(ident) = p.path.segments.last() {
-                        let var_name = ident.ident.to_string();
-                        if self.temp_vars.contains(&var_name) {
-                            self.out.push(Finding {
-                                check_name: CHECK_NAME.to_string(),
-                                severity: Severity::High,
-                                file_path: String::new(),
-                                line: i.span().start().line,
-                                function_name: self.fn_name.clone(),
-                                description: format!(
-                                    "Method `{}` calls `require_auth()` with address `{}` \
-                                     obtained from temporary storage. Temporary storage may have \
-                                     expired (TTL elapsed), causing auth to fail silently or \
-                                     authenticate against a default address.",
-                                    self.fn_name, var_name
-                                ),
-                            });
-                        }
+    fn visit_local(&mut self, i: &'ast syn::Local) {
+        // Track variable assignments from temporary storage
+        if let Some(init) = &i.init {
+            if let Expr::MethodCall(m) = &*init.expr {
+                if is_temp_storage_get(m) {
+                    if let syn::Pat::Ident(pat_ident) = &i.pat {
+                        self.temp_storage_vars.push(pat_ident.ident.to_string());
                     }
                 }
             }
         }
-        visit::visit_expr_method_call(self, i);
+        visit::visit_local(self, i);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Check;
     use syn::parse_file;
 
     #[test]
-    fn flags_require_auth_with_temp_storage_var() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Address, Env};
-pub struct C;
+    fn detects_require_auth_with_temp_storage() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn bad(env: Env) {
-        let admin: Address = env.storage().temporary().get(&"admin").unwrap();
-        admin.require_auth();
+impl MyContract {
+    pub fn vulnerable(env: Env) {
+        let admin = env.storage().temporary().get(&Symbol::new(&env, "admin")).unwrap();
+        env.require_auth(&admin);
     }
 }
-"#,
-        )?;
-        let hits = AuthTempStorageCheck.run(&file, "");
-        assert_eq!(hits.len(), 1);
-        assert_eq!(hits[0].severity, Severity::High);
-        assert_eq!(hits[0].check_name, CHECK_NAME);
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = AuthTempStorageCheck;
+        let findings = check.run(&file, code);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].check_name, CHECK_NAME);
+        assert_eq!(findings[0].severity, Severity::High);
     }
 
     #[test]
-    fn no_finding_for_persistent_storage() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Address, Env};
-pub struct C;
+    fn allows_require_auth_with_instance_storage() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn good(env: Env) {
-        let admin: Address = env.storage().persistent().get(&"admin").unwrap();
-        admin.require_auth();
+impl MyContract {
+    pub fn safe(env: Env) {
+        let admin = env.storage().instance().get(&Symbol::new(&env, "admin")).unwrap();
+        env.require_auth(&admin);
     }
 }
-"#,
-        )?;
-        let hits = AuthTempStorageCheck.run(&file, "");
-        assert!(hits.is_empty());
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = AuthTempStorageCheck;
+        let findings = check.run(&file, code);
+        assert!(findings.is_empty());
     }
 
     #[test]
-    fn no_finding_for_env_require_auth() -> Result<(), syn::Error> {
-        let file = parse_file(
-            r#"
-use soroban_sdk::{contractimpl, Env};
-pub struct C;
+    fn ignores_require_auth_without_temp_storage() {
+        let code = r#"
 #[contractimpl]
-impl C {
-    pub fn good(env: Env) {
-        let _admin: Address = env.storage().temporary().get(&"admin").unwrap();
-        env.require_auth();
+impl MyContract {
+    pub fn safe(env: Env, admin: Address) {
+        env.require_auth(&admin);
     }
 }
-"#,
-        )?;
-        let hits = AuthTempStorageCheck.run(&file, "");
-        assert!(hits.is_empty());
-        Ok(())
+        "#;
+        let file = parse_file(code).unwrap();
+        let check = AuthTempStorageCheck;
+        let findings = check.run(&file, code);
+        assert!(findings.is_empty());
     }
 }

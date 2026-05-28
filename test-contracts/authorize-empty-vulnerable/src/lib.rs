@@ -6,9 +6,8 @@ pub struct AuthorizeEmptyVulnerable;
 
 #[contractimpl]
 impl AuthorizeEmptyVulnerable {
-    /// ❌ Authorizes nothing but still consumes compute.
-    /// Likely a bug — developer intended to authorize specific sub-contract calls.
-    pub fn bad_authorize(env: Env) {
+    /// Calls authorize_as_current_contract with empty invocation vector.
+    pub fn vulnerable_empty_auth(env: Env) {
         env.authorize_as_current_contract(&[]);
     }
 }
