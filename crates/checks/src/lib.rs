@@ -2,6 +2,10 @@
 
 pub mod admin;
 pub mod admin_in_temp;
+pub mod admin_no_event;
+pub mod balance_negative_check;
+pub mod mul_before_div;
+pub mod token_shared_storage;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
 pub mod amount_mul_overflow;
@@ -79,6 +83,10 @@ pub mod zero_amount;
 
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
+pub use admin_no_event::AdminNoEventCheck;
+pub use balance_negative_check::BalanceNegativeCheck;
+pub use mul_before_div::MulBeforeDivCheck;
+pub use token_shared_storage::TokenSharedStorageCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use amount_mul_overflow::AmountMulOverflowCheck;
@@ -246,5 +254,9 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(LinearWhitelistScanCheck),
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
+        Box::new(BalanceNegativeCheck),
+        Box::new(MulBeforeDivCheck),
+        Box::new(TokenSharedStorageCheck),
+        Box::new(AdminNoEventCheck),
     ]
 }
