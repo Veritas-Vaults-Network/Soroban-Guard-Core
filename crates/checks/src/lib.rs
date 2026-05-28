@@ -1,35 +1,45 @@
 //! Vulnerability detectors for Soroban smart contracts.
 
+pub mod address_from_str;
 pub mod admin;
 pub mod admin_in_temp;
 pub mod admin_key_removal;
 pub mod admin_overwrite;
+pub mod address_cmp_instead_of_auth;
 pub mod amount_mul_overflow;
 pub mod assert_for_auth;
 pub mod auth;
 pub mod auth_loop_dos;
+pub mod auth_shadow;
 pub mod authorize_as_contract;
+pub mod authorize_empty;
+pub mod deploy_arg_auth;
 pub mod balance_overflow;
 pub mod broken_pause;
+pub mod bump_to_ttl;
 pub mod burn_auth;
 pub mod bytes_not_bytesn;
+pub mod bytes_oversized;
 pub mod contracterror_attr;
 pub mod contracttype;
 pub mod current_contract_unwrap;
 pub mod debug_entrypoint;
+pub mod deploy_arg_auth;
 pub mod dynamic_symbol_key;
 pub mod env_in_struct;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod hash_as_storage_key;
+pub mod i128_to_u64;
 pub mod instance_domain_mixing;
 pub mod instance_remove_critical;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod key_prefix_collision;
 pub mod linear_whitelist_scan;
 pub mod lock_period_truncation;
 pub mod invoke_unchecked_cast;
-pub mod key_type_mismatch;
+pub mod key_length_exceeded;
 pub mod map_key_explosion;
 pub mod map_user_key_bloat;
 pub mod migration_guard;
@@ -41,17 +51,24 @@ pub mod no_std;
 pub mod nonce_increment_order;
 pub mod overflow;
 pub mod ownership_transfer;
+pub mod persistent_overwrite;
+pub mod instance_set_no_has;
+pub mod storage_type_version;
+pub mod ttl_before_write;
 pub mod uncapped_fee;
 pub mod unlimited_allowance;
 pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod persistent_for_temp;
 pub mod reentrancy;
+pub mod runtime_symbol;
 pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
 pub mod storage;
+pub mod storage_has_get_mismatch;
+pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
@@ -73,6 +90,7 @@ pub mod unbounded_input_storage;
 pub mod unbounded_storage;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
+pub mod redundant_auth_args;
 mod util;
 pub mod vec_push_in_loop;
 pub mod vesting_cliff;
@@ -81,34 +99,43 @@ pub mod withdraw_auth;
 pub mod wrapping_balance_op;
 pub mod zero_amount;
 
+pub use address_from_str::AddressFromStrCheck;
 pub use admin::UnprotectedAdminCheck;
 pub use admin_in_temp::AdminInTempCheck;
 pub use admin_key_removal::AdminKeyRemovalCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
+pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use assert_for_auth::AssertForAuthCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use auth_loop_dos::AuthLoopDosCheck;
+pub use auth_shadow::AuthShadowCheck;
 pub use authorize_as_contract::AuthorizeAsContractCheck;
+pub use authorize_empty::AuthorizeEmptyCheck;
+pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use balance_overflow::BalanceOverflowCheck;
 pub use broken_pause::BrokenPauseCheck;
+pub use bump_to_ttl::BumpToTtlCheck;
 pub use burn_auth::BurnAuthCheck;
 pub use bytes_not_bytesn::BytesNotBytesNCheck;
+pub use bytes_oversized::BytesOversizedCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
+pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use env_in_struct::EnvInStructCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
+pub use i128_to_u64::I128ToU64Check;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
 pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
 pub use invoke_unchecked_cast::InvokeUncheckedCastCheck;
-pub use key_type_mismatch::KeyTypeMismatchCheck;
+pub use key_prefix_collision::KeyPrefixCollisionCheck;
 pub use linear_whitelist_scan::LinearWhitelistScanCheck;
 pub use lock_period_truncation::LockPeriodTruncationCheck;
 pub use map_key_explosion::MapKeyExplosionCheck;
@@ -122,17 +149,24 @@ pub use no_std::NoStdCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use ownership_transfer::OwnershipTransferCheck;
+pub use persistent_overwrite::PersistentOverwriteCheck;
+pub use instance_set_no_has::InstanceSetNoHasCheck;
+pub use storage_type_version::StorageTypeVersionCheck;
+pub use ttl_before_write::TtlBeforeWriteCheck;
 pub use uncapped_fee::UncappedFeeCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use panic_usage::PanicUsageCheck;
 pub use partial_write_on_error::PartialWriteOnErrorCheck;
 pub use persistent_for_temp::PersistentForTempCheck;
 pub use reentrancy::ReentrancyCheck;
+pub use runtime_symbol::RuntimeSymbolCheck;
 pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
 pub use storage::UnsafeStoragePatternsCheck;
+pub use storage_has_get_mismatch::StorageHasGetMismatchCheck;
+pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
@@ -152,6 +186,7 @@ pub use unbounded_batch::UnboundedBatchCheck;
 pub use unbounded_input_storage::UnboundedInputStorageCheck;
 pub use unbounded_storage::UnboundedStorageCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use redundant_auth_args::RedundantAuthArgsCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -224,6 +259,10 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(SequenceNonceCheck),
         Box::new(AssertForAuthCheck),
         Box::new(AuthorizeAsContractCheck),
+        Box::new(AuthorizeEmptyCheck),
+        Box::new(AddressCmpInsteadOfAuthCheck),
+        Box::new(DeployArgAuthCheck),
+        Box::new(AuthTempStorageCheck),
         Box::new(MapKeyExplosionCheck),
         Box::new(DynamicSymbolKeyCheck),
         Box::new(InstanceVecGrowthCheck),
@@ -255,8 +294,5 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UncappedSlippageCheck),
         Box::new(NonceIncrementOrderCheck),
         Box::new(TierKeyCollisionCheck),
-        Box::new(PersistentForTempCheck),
-        Box::new(TtlMinZeroCheck),
-        Box::new(KeyTypeMismatchCheck),
     ]
 }
