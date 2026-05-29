@@ -83,6 +83,7 @@ pub mod storage;
 pub mod storage_has_get_mismatch;
 pub mod storage_no_cache;
 pub mod storage_type_confusion;
+pub mod result_non_exhaustive;
 pub mod storage_type_version;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
@@ -325,6 +326,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(NegativeDepositCheck),
         Box::new(NoParamNoAuthCheck),
         Box::new(StorageTypeConfusionCheck),
+        Box::new(ResultNonExhaustiveCheck),
         Box::new(AuthLoopDosCheck),
         Box::new(OwnershipTransferCheck),
         Box::new(Secp256k1UncheckedCheck),
