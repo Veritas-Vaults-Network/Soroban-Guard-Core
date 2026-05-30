@@ -292,6 +292,7 @@ pub use uncapped_slippage::UncappedSlippageCheck;
 pub use storage_key_collision::StorageKeyCollisionCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use upgrade_no_event::UpgradeNoEventCheck;
 pub use vec_mutate_in_loop::VecMutateInLoopCheck;
 pub use vec_map_tuple_convert::VecMapTupleConvertCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
