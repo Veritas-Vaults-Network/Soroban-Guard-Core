@@ -93,3 +93,72 @@ Names like `set_owner` strongly suggest privilege; without any auth call the sca
 - `Symbol::new` with a `const` or macro-expanded literal may still be flagged if it is not a `syn::Lit::Str`.
 
 **Fixture:** `test-contracts/storage-vulnerable/`, `test-contracts/storage-safe/`
+
+---
+
+## `instance-ttl-missing` (Medium)
+
+**Status:** Phase 1
+
+**What it detects**
+
+In a contract file, if there is at least one call to `env.storage().instance().set(...)` but no call to `env.storage().instance().extend_ttl(...)` anywhere in the file.
+
+**Why it matters**
+
+Instance storage in Soroban has a TTL (time-to-live) and will expire if not periodically extended. If a contract uses instance storage but never extends its TTL, the contract may become inaccessible once the instance expires.
+
+**Limitations**
+
+- Only detects direct calls; does not analyze indirect calls through helper functions.
+- Checks the entire file, not per function.
+
+**Fixture:** `test-contracts/instance-ttl-vulnerable/`, `test-contracts/instance-ttl-safe/`
+
+---
+
+## `storage-key-collision` (Medium)
+
+**Status:** Phase 1
+
+**What it detects**
+
+Storage keys with similar names that could lead to accidental overwrites, such as "owner", "owner_addr", and "owner_address" in the same contract.
+
+**Why it matters**
+
+Similar key names can cause developers to accidentally use the wrong key when reading or writing storage, leading to data corruption or security vulnerabilities. Distinct key names help prevent these mistakes.
+
+**Limitations**
+
+- Only detects string literal keys, not symbol-based keys
+- May flag some legitimate cases where similar keys are intentionally used
+
+**Fixture:** `test-contracts/storage-key-collision-vulnerable/`, `test-contracts/storage-key-collision-safe/`
+
+---
+
+## `zero-divisor` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Inside `#[contractimpl]` methods, any `/` (division) or `%` (remainder) where the right-hand operand is a function parameter and the method body does **not** contain a zero-check guard for that parameter anywhere.
+
+A guard is recognized as:
+
+- `assert!(param ...)` — an `assert!` macro whose token stream contains the parameter name (textual heuristic).
+- `if cond { ... }` — an `if` expression whose condition contains both the parameter name and the literal `"0"`.
+
+**Why it matters**
+
+Integer division or remainder by zero causes a panic in Rust, which terminates the entire Soroban transaction. An attacker who controls any fee, rate, or price argument can pass `0` to permanently brick any entrypoint that divides by that parameter without checking for zero first.
+
+**Limitations**
+
+- Syntactic, not type-aware: any parameter matching the name triggers the finding; the check does not verify the parameter is actually a numeric type.
+- Guards are detected by substring match anywhere in the body, not by dataflow.
+- `assert_eq!(param, 0)` (two-argument form) is not recognized — only the single-argument `assert!` form counts.
+
+**Fixture:** `test-contracts/zero-divisor-vulnerable/`, `test-contracts/zero-divisor-safe/`
