@@ -119,6 +119,7 @@ pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
 pub mod tier_key_collision;
+pub mod timestamp_as_nonce;
 pub mod timestamp_expiry_no_min;
 pub mod timestamp_truncation;
 pub mod token_burn_auth;
@@ -274,6 +275,7 @@ pub use storage_type_version::StorageTypeVersionCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use tier_key_collision::TierKeyCollisionCheck;
+pub use timestamp_as_nonce::TimestampAsNonceCheck;
 pub use timestamp_expiry_no_min::TimestampExpiryNoMinCheck;
 pub use timestamp_truncation::TimestampTruncationCheck;
 pub use token_burn_auth::TokenBurnAuthCheck;
@@ -453,5 +455,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(OwnershipPendingNotClearedCheck),
         Box::new(OwnershipNoApprovalInvalidationCheck),
         Box::new(TryIntoUnwrapCheck),
+        Box::new(TimestampAsNonceCheck),
     ]
 }
