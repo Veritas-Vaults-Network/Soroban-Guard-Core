@@ -96,6 +96,28 @@ Names like `set_owner` strongly suggest privilege; without any auth call the sca
 
 ---
 
+## `approve-race-condition` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Inside `#[contractimpl]` methods whose name contains `"approve"`, this rule flags storage `set` calls that appear to write a non-zero allowance when the same method has no zero-reset storage `set` and no broad guard (`assert!` or `if`).
+
+**Why it matters**
+
+Changing an existing non-zero allowance directly to a new non-zero value can let a spender front-run the approval update and spend both the old and new allowance. Resetting to zero first, or explicitly guarding the transition, avoids the classic allowance race pattern.
+
+**Limitations**
+
+- Presence/absence heuristic only; it does not prove the storage key is an allowance key.
+- A zero literal in any storage `set` argument counts as a reset, including `&0`.
+- Any `assert!` macro or `if` expression in the method counts as a guard.
+
+**Fixture:** `test-contracts/approve-race-vulnerable/`, `test-contracts/approve-race-safe/`
+
+---
+
 ## `instance-ttl-missing` (Medium)
 
 **Status:** Phase 1
