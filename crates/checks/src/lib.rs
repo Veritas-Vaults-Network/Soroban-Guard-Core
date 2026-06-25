@@ -14,6 +14,7 @@ pub mod admin_stored_unused;
 pub mod admin_zero_address;
 pub mod allowance_clear;
 pub mod amount_mul_overflow;
+pub mod approve_race;
 pub mod assert_for_auth;
 pub mod auth;
 pub mod auth_loop_dos;
@@ -179,6 +180,7 @@ pub use admin_stored_unused::AdminStoredUnusedCheck;
 pub use admin_zero_address::AdminZeroAddressCheck;
 pub use allowance_clear::AllowanceClearCheck;
 pub use amount_mul_overflow::AmountMulOverflowCheck;
+pub use approve_race::ApproveRaceCheck;
 pub use assert_for_auth::AssertForAuthCheck;
 pub use auth::MissingRequireAuthCheck;
 pub use auth_loop_dos::AuthLoopDosCheck;
@@ -372,6 +374,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AdminKeyRemovalCheck),
         Box::new(NoAdminCheck),
         Box::new(UnsafeStoragePatternsCheck),
+        Box::new(ApproveRaceCheck),
         Box::new(InstanceDomainMixingCheck),
         Box::new(PanicUsageCheck),
         Box::new(CatchUnwindCheck),
