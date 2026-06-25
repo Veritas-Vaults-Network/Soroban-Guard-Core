@@ -96,25 +96,25 @@ Names like `set_owner` strongly suggest privilege; without any auth call the sca
 
 ---
 
-## `approve-race-condition` (High)
+## `double-init` (High)
 
 **Status:** Phase 2
 
 **What it detects**
 
-Inside `#[contractimpl]` methods whose name contains `"approve"`, this rule flags storage `set` calls that appear to write a non-zero allowance when the same method has no zero-reset storage `set` and no broad guard (`assert!` or `if`).
+Inside `#[contractimpl]` methods whose name contains `"init"` (case-insensitive), this rule flags a storage `set` call through `env.storage()` when the same method does not first perform a storage `has` or `get` guard.
 
 **Why it matters**
 
-Changing an existing non-zero allowance directly to a new non-zero value can let a spender front-run the approval update and spend both the old and new allowance. Resetting to zero first, or explicitly guarding the transition, avoids the classic allowance race pattern.
+Initialization entrypoints usually establish privileged state such as owner/admin or one-time configuration. If they can be called again without checking existing initialization state, an attacker may re-initialize the contract and overwrite critical storage.
 
 **Limitations**
 
-- Presence/absence heuristic only; it does not prove the storage key is an allowance key.
-- A zero literal in any storage `set` argument counts as a reset, including `&0`.
-- Any `assert!` macro or `if` expression in the method counts as a guard.
+- Structural, not dataflow-aware: the guard must appear as a direct storage `has` or `get` call in the same init-like method.
+- Helper-based initialization guards are not recognized.
+- Non-init method names are intentionally ignored to avoid flagging normal setters.
 
-**Fixture:** `test-contracts/approve-race-vulnerable/`, `test-contracts/approve-race-safe/`
+**Fixture:** `test-contracts/double-init-vulnerable/`, `test-contracts/double-init-safe/`
 
 ---
 
