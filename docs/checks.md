@@ -96,6 +96,28 @@ Names like `set_owner` strongly suggest privilege; without any auth call the sca
 
 ---
 
+## `double-init` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Inside `#[contractimpl]` methods whose name contains `"init"` (case-insensitive), this rule flags a storage `set` call through `env.storage()` when the same method does not first perform a storage `has` or `get` guard.
+
+**Why it matters**
+
+Initialization entrypoints usually establish privileged state such as owner/admin or one-time configuration. If they can be called again without checking existing initialization state, an attacker may re-initialize the contract and overwrite critical storage.
+
+**Limitations**
+
+- Structural, not dataflow-aware: the guard must appear as a direct storage `has` or `get` call in the same init-like method.
+- Helper-based initialization guards are not recognized.
+- Non-init method names are intentionally ignored to avoid flagging normal setters.
+
+**Fixture:** `test-contracts/double-init-vulnerable/`, `test-contracts/double-init-safe/`
+
+---
+
 ## `instance-ttl-missing` (Medium)
 
 **Status:** Phase 1

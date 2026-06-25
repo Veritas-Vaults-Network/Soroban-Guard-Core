@@ -43,6 +43,7 @@ pub mod deploy_arg_auth;
 pub mod deploy_salt_predictable;
 pub mod deploy_unverified;
 pub mod deployer_reuse;
+pub mod double_init;
 pub mod dynamic_symbol_key;
 pub mod ed25519_key_in_temp;
 pub mod env_in_struct;
@@ -206,6 +207,7 @@ pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use deploy_salt_predictable::DeploySaltPredictableCheck;
 pub use deploy_unverified::DeployUnverifiedCheck;
 pub use deployer_reuse::DeployerReuseCheck;
+pub use double_init::DoubleInitCheck;
 pub use dynamic_symbol_key::DynamicSymbolKeyCheck;
 pub use ed25519_key_in_temp::Ed25519KeyInTempCheck;
 pub use env_in_struct::EnvInStructCheck;
@@ -405,6 +407,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AddressCmpInsteadOfAuthCheck),
         Box::new(DeployArgAuthCheck),
         Box::new(DeployerReuseCheck),
+        Box::new(DoubleInitCheck),
         Box::new(AuthTempStorageCheck),
         Box::new(MapKeyExplosionCheck),
         Box::new(DynamicSymbolKeyCheck),
