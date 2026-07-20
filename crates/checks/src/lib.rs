@@ -132,6 +132,7 @@ pub mod transfer_to_self;
 pub mod try_into_unwrap;
 pub mod ttl_arg_order;
 pub mod ttl_before_write;
+pub mod ttl_duration_provenance;
 pub mod ttl_every_call;
 pub mod ttl_min_zero;
 pub mod ttl_uniform;
@@ -150,6 +151,7 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 pub mod upgrade_no_event;
 pub mod upgrade_no_schema_version;
+mod provenance;
 mod util;
 pub mod vec_get_unwrap;
 pub mod vec_map_tuple_convert;
@@ -296,6 +298,7 @@ pub use ttl_before_write::TtlBeforeWriteCheck;
 pub use ttl_every_call::TtlEveryCallCheck;
 pub use ttl_min_zero::TtlMinZeroCheck;
 pub use ttl_uniform::TtlUniformCheck;
+pub use ttl_duration_provenance::TtlDurationProvenanceCheck;
 pub use unauth_address_in_struct::UnauthAddressInStructCheck;
 pub use unauth_fee_setter::UnauthFeeSetterCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
@@ -470,5 +473,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(TtlDurationProvenanceCheck),
     ]
 }
