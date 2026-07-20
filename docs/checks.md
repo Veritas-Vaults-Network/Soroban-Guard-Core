@@ -265,3 +265,27 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 - Token matching is case-insensitive but purely textual - a key named `SCHEMA_VERSION` constant satisfies it only if those characters appear in the token stream at the call site.
 
 **Fixture:** `test-contracts/upgrade-no-schema-version-vulnerable/`, `test-contracts/upgrade-no-schema-version-safe/`
+
+---
+
+## `withdrawal-aggregate-bypass` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+1. Any public `#[contractimpl]` method that has a per-call limit (assessed by an `assert!` or `if` guard comparing a function parameter against a value) and exists in a periodic context (the function name or body contains periodic terms like `daily`, `weekly`, `per_period`, `rate_limit`, `per_week`, `per_day`, `limit_period`, `period_limit`).
+2. Traces the call graph of functions/methods defined in the same file that are reachable from the entrypoint.
+3. If no reachable function touches (reads or writes) an accumulator/window storage key (heuristic: storage keys containing `total`, `window`, `timestamp`, `time`, `count`, `accum`, `period_start`, `last_withdraw`, `last_call`) or queries the ledger timestamp, the entrypoint is flagged.
+
+**Why it matters**
+
+Imposing a per-transaction/per-call limit on a periodic operation (e.g. withdrawal amount limit per day) is ineffective if the contract does not maintain and update an accumulator storage variable (such as total withdrawn today). An attacker can simply bypass the daily limit by calling the function multiple times in a row.
+
+**Limitations**
+
+- Call-graph reachability is scoped to the current file (cross-file calls are not traced).
+- Purely heuristic-based: relies on naming conventions to classify whether a limit is periodic and whether a storage key functions as an accumulator.
+
+**Fixture:** `test-contracts/withdrawal-aggregate-bypass-vulnerable/`, `test-contracts/withdrawal-aggregate-bypass-safe/`
+
