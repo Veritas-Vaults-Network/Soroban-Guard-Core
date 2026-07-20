@@ -118,6 +118,7 @@ pub mod storage_key_collision;
 pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod storage_type_version;
+pub mod interprocedural_storage_toctou;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
@@ -280,6 +281,7 @@ pub use storage_key_collision::StorageKeyCollisionCheck;
 pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use storage_type_version::StorageTypeVersionCheck;
+pub use interprocedural_storage_toctou::InterproceduralStorageTocTouCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use tier_key_collision::TierKeyCollisionCheck;
@@ -457,6 +459,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TokenSharedStorageCheck),
         Box::new(AdminNoEventCheck),
         Box::new(UnauthorizedStorageReadCheck),
+        Box::new(InterproceduralStorageTocTouCheck),
         Box::new(TierKeyCollisionCheck),
         Box::new(StorageTypeVersionCheck),
         Box::new(AdminZeroAddressCheck),

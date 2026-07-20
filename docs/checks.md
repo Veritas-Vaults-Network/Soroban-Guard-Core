@@ -265,3 +265,31 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 - Token matching is case-insensitive but purely textual - a key named `SCHEMA_VERSION` constant satisfies it only if those characters appear in the token stream at the call site.
 
 **Fixture:** `test-contracts/upgrade-no-schema-version-vulnerable/`, `test-contracts/upgrade-no-schema-version-safe/`
+
+---
+
+## `interprocedural-storage-toctou` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Using the call graph, for each public `#[contractimpl]` entrypoint, this check finds every storage `has`/`get` read reachable from it and every storage `set`/`remove` write reachable from it. It flags when:
+
+1. A read and a write operate on the **same storage key** (structural token comparison) and the **same storage tier** (`persistent`/`instance`/`temporary`).
+2. The read happens in a **different function** than the write (i.e. the read and write are not in the same function body).
+3. The read precedes the write (`read.line < write.line`).
+
+This catches the common Soroban pattern where a `claim()` entrypoint calls `already_claimed()` (which does `has()`) and then `do_claim()` (which does `set()`) — two separate functions with no shared local variable, invisible to single-function checks like `storage-has-get-race`.
+
+**Why it matters**
+
+Without a re-check guard (early return / panic / assert) structurally between the read and the write, an attacker can race the two calls by submitting two transactions that execute the `has()` check before either executes the `set()` write, leading to double-claim, double-withdrawal, or similar TOCTOU exploits.
+
+**Limitations**
+
+- Only follows direct `Self::foo(...)` and `foo(...)` calls within the same `#[contractimpl]` impl block. Does not follow calls through trait methods, external contracts, or closures.
+- Key equality is determined by structural token-string comparison, not semantic equivalence. Two different expressions that produce the same runtime key (e.g. `&KEY` vs `&Symbol::new(&env, "key")`) are treated as different keys.
+- The check does not analyze guards (early returns, panics) structurally — it relies on the read/write being in different functions as its primary signal. A safe pattern that folds the re-check into the write function (e.g. `already_claimed_and_set`) is not flagged.
+
+**Fixture:** `test-contracts/interprocedural-storage-toctou-vulnerable/`, `test-contracts/interprocedural-storage-toctou-safe/`
