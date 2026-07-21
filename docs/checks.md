@@ -265,3 +265,44 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 - Token matching is case-insensitive but purely textual - a key named `SCHEMA_VERSION` constant satisfies it only if those characters appear in the token stream at the call site.
 
 **Fixture:** `test-contracts/upgrade-no-schema-version-vulnerable/`, `test-contracts/upgrade-no-schema-version-safe/`
+
+---
+
+## `revoked-admin-reuse` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Contracts that maintain a "revoked / removed admins" collection for audit or compliance purposes, but whose admin-rotation function never checks the incoming address against that collection before accepting it as the new admin.
+
+The check runs in two passes over all `#[contractimpl]` function bodies in the file:
+
+**Pass 1 — revocation-collection detection**
+
+Walk every identifier and string literal in every `#[contractimpl]` function body. Any identifier or key string whose lowercased text contains one of the following revocation keywords is recorded as a "revocation token":
+
+`revoked`, `removed`, `blacklist`, `denylist`, `banned`, `blocklist`, `blocked`
+
+If no such token is found anywhere in the file, the check produces no findings.
+
+**Pass 2 — admin-setter without membership check**
+
+For each function whose name matches the admin-setter heuristic (exact members of `ADMIN_SETTER_NAMES`: `set_admin`, `set_owner`, `transfer_ownership`, `update_admin`, `change_admin`, `rotate_admin`, `assign_admin`, `replace_admin`, `new_admin`; or the broader rule: name contains a setter verb *and* contains `admin` or `owner`):
+
+1. The function must accept at least one `Address` parameter.
+2. The function must contain at least one storage write (`set`, `remove`, `push_back`, or `insert` on a receiver chain that includes `.storage()`).
+3. If conditions 1 and 2 hold, the body is scanned for a `.contains(`, `.has(`, or `.contains_key(` method call whose receiver or arguments involve a revocation-keyword identifier. If no such call is found, the function is flagged.
+
+**Why it matters**
+
+An admin-rotation mechanism that maintains a "removed admins" list for compliance reasons silently breaks if `set_admin(new_admin)` never cross-checks `new_admin` against that list. A previously revoked admin can be re-appointed without detection, defeating the entire removal mechanism.
+
+**Limitations**
+
+- Pure syntactic analysis: no type inference, no inter-procedural call graph. A helper function that performs the membership check internally will produce a false positive if not inlined.
+- Only detects revoked-admins collections that exist in the *same* file as the admin-setter.
+- The membership-check detection is heuristic: any `.contains(` / `.has(` call whose receiver or arguments contain a revocation-keyword identifier clears the finding, regardless of whether it is actually guarding the storage write.
+- The collection-detection pass fires on any identifier that *contains* a revocation keyword (e.g. a local variable named `not_revoked` would match `revoked`). Narrow your variable names to avoid false negatives in unusual cases.
+
+**Fixture:** `test-contracts/revoked-admin-reuse-vulnerable/`, `test-contracts/revoked-admin-reuse-safe/`

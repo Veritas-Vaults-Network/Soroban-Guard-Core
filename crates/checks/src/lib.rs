@@ -103,6 +103,7 @@ pub mod persistent_overwrite;
 pub mod redundant_auth_args;
 pub mod reentrancy;
 pub mod renounce_no_backup;
+pub mod revoked_admin_reuse;
 pub mod result_err_ignored;
 pub mod result_non_exhaustive;
 pub mod runtime_symbol;
@@ -265,6 +266,7 @@ pub use persistent_overwrite::PersistentOverwriteCheck;
 pub use redundant_auth_args::RedundantAuthArgsCheck;
 pub use reentrancy::ReentrancyCheck;
 pub use renounce_no_backup::RenounceNoBackupCheck;
+pub use revoked_admin_reuse::RevokedAdminReuseCheck;
 pub use result_err_ignored::ResultErrIgnoredCheck;
 pub use result_non_exhaustive::ResultNonExhaustiveCheck;
 pub use runtime_symbol::RuntimeSymbolCheck;
@@ -397,6 +399,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(WeakCommitmentKnownCheck),
         Box::new(ReentrancyCheck),
         Box::new(ResultErrIgnoredCheck),
+        Box::new(RevokedAdminReuseCheck),
         Box::new(TokenTransferUncheckedCheck),
         Box::new(ContracterrorAttrCheck),
         Box::new(TokenBurnAuthCheck),
