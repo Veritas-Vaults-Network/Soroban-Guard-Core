@@ -265,3 +265,89 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 - Token matching is case-insensitive but purely textual - a key named `SCHEMA_VERSION` constant satisfies it only if those characters appear in the token stream at the call site.
 
 **Fixture:** `test-contracts/upgrade-no-schema-version-vulnerable/`, `test-contracts/upgrade-no-schema-version-safe/`
+
+---
+
+## `cross-token-provenance-mix` (High)
+
+**Status:** Phase 3
+
+**What it detects**
+
+This check is different in kind from every other rule in this document: it is the only
+one that performs def-use/taint-style tracing of a value's *provenance* across an
+arithmetic expression rather than a single-expression syntactic pattern match. It
+targets a bug class specific to functions that handle two (or more) assets: combining
+amounts that are denominated in different tokens with `+`/`-` as though they were the
+same unit — e.g. `let total = amount_a + amount_b;` in a two-token `swap` — which is
+almost never correct unless an explicit conversion happened first.
+
+The algorithm, in `#[contractimpl]` methods:
+
+1. **Identify the "asset" parameters.** Collect every `Address`-typed parameter whose
+   name (lowercased) contains `token` or `asset` (e.g. `token_a`, `token_b`). If fewer
+   than two such parameters exist, the function is not a candidate for this check at
+   all and is skipped entirely — this is the gate that keeps the check from firing on
+   ordinary single-token methods that merely happen to take more than one `Address`
+   (caller, recipient, admin, ...).
+2. **Tag numeric parameters.** For every `i128`/`u128`/`i64`/`u64`/`i32`/`u32`
+   parameter, pair it with one of the asset parameters by naming convention: first,
+   match the trailing `_<suffix>` of both names (`amount_a` <-> `token_a` via the
+   shared suffix `a`); failing that, check whether the numeric parameter's name
+   textually contains an asset parameter's full name (`token_a_amount` contains
+   `token_a`). A numeric parameter that matches neither rule is left untagged and
+   invisible to the rest of the check.
+3. **Propagate tags.** Walking the function body in source order, each tag is carried
+   forward through `let` rebindings (`let a = amount_a;` tags `a` the same as
+   `amount_a`) and through `+`/`-` arithmetic where both operands carry the *same* tag
+   (the result keeps that tag). A `let` whose initializer resolves to no tag (or to a
+   mismatch — see next point) drops any previous tag for that binding name, so a
+   shadowed name doesn't keep stale provenance.
+4. **Flag mismatches.** Any `+`, `-`, `+=`, or `-=` expression whose two operands
+   resolve to two *different* asset tags is flagged, **unless** a call whose name
+   contains `rate`, `price`, `convert`, or `exchange` (case-insensitive; `ExprCall` or
+   `ExprMethodCall`) was encountered earlier in the same source-order traversal of the
+   function body. That call is treated as an explicit unit conversion and suppresses
+   every mismatch found afterward in that function — this is a whole-function
+   suppression, not a check that the conversion call's result is actually the operand
+   being combined.
+
+`*`/`/` are deliberately **not** treated as "combining" two denominations: multiplying
+or dividing values from two different assets is a normal way to compute an exchange
+rate or a price (`amount_a * price_b`), whereas adding or subtracting them essentially
+never is.
+
+**Why it matters**
+
+Two amounts from two different tokens are not the same unit of account. Summing or
+differencing them directly - without first converting one side through an oracle price
+or fixed exchange rate - produces a number that has no real-world meaning, and using
+that number to move funds, record a balance, or check a threshold can under- or
+over-account one side of a swap, letting an attacker drain value or corrupt accounting
+state.
+
+**Limitations (fuzzy by construction, since `syn` has no type information)**
+
+- **Naming-convention dependent, in both directions.** The whole check hinges on the
+  `token_a`/`amount_a`-style suffix or substring convention; a swap that names its
+  parameters `sell_token`/`buy_token` and `amount_in`/`amount_out` (no shared suffix
+  and no substring containment) will simply not be tagged, and the check produces
+  **no findings** for genuinely mixed arithmetic — a false negative by design rather
+  than a guess.
+- **No real def-use graph.** Propagation is a single forward pass over the `syn` AST in
+  traversal order (`syn::visit::Visit`'s default depth-first walk), not a true
+  control-flow graph: a tag established only inside one branch of an `if`/`else` is
+  still visible to code that (in a real CFG) could only run when the *other* branch
+  was taken, and loops are not modeled as repeating.
+- **Whole-function conversion suppression.** A conversion-looking call anywhere earlier
+  in the function suppresses **every** later mismatch in that function, whether or not
+  its return value is the one actually used in the flagged expression. A `convert_rate`
+  call unrelated to the amounts being combined would incorrectly silence a real finding.
+- **Two-asset case only in practice.** With three or more asset parameters, any pair of
+  differently-tagged operands is still flagged, but the tag propagation and
+  conversion-suppression heuristics above were designed and tested against the
+  two-asset (`token_a`/`token_b`) case.
+- **Method calls are not modeled as arithmetic.** `amount_a.checked_add(amount_b)` is
+  not traced — only literal `+`/`-`/`+=`/`-=` binary expressions are.
+
+**Fixture:** `test-contracts/cross-token-provenance-mix-vulnerable/`, `test-contracts/cross-token-provenance-mix-safe/`

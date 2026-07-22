@@ -35,6 +35,7 @@ pub mod bytes_oversized;
 pub mod catch_unwind;
 pub mod contracterror_attr;
 pub mod contracttype;
+pub mod cross_token_provenance_mix;
 pub mod crypto_no_cache;
 pub mod current_contract_unwrap;
 pub mod dead_storage_code;
@@ -201,6 +202,7 @@ pub use bytes_oversized::BytesOversizedCheck;
 pub use catch_unwind::CatchUnwindCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use cross_token_provenance_mix::CrossTokenProvenanceMixCheck;
 pub use crypto_no_cache::CryptoNoCacheCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
@@ -470,5 +472,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(CrossTokenProvenanceMixCheck),
     ]
 }
