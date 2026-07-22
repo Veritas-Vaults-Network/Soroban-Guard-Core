@@ -265,3 +265,55 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 - Token matching is case-insensitive but purely textual - a key named `SCHEMA_VERSION` constant satisfies it only if those characters appear in the token stream at the call site.
 
 **Fixture:** `test-contracts/upgrade-no-schema-version-vulnerable/`, `test-contracts/upgrade-no-schema-version-safe/`
+
+---
+
+## `scale-factor-drift` (High)
+
+**Status:** Phase 2
+
+**What it detects**
+
+Correlates the fixed-point scale factor applied to a storage value across every call
+site in the file, grouped by the (textual) storage key, and flags any key for which
+more than one distinct integer literal is used:
+
+1. For every `#[contractimpl]` function, walk the body in statement order tracking two
+   small maps: `variable -> storage key` (bound by an unscaled `let v = ...get(key)...;`)
+   and `variable -> scale literal` (bound by `let v = expr (* | /) LITERAL;`).
+2. At every storage `set(key, value)` call, if `value` (after stripping `&`) is itself
+   `expr (* | /) LITERAL` or a variable previously bound to such an expression, record
+   `(key, literal)` as a **write** site.
+3. At every storage `get(key)` call - optionally unwrapped through `.unwrap()`,
+   `.unwrap_or(..)`, `.unwrap_or_default()`, `.unwrap_or_else(..)`, `.expect(..)`, or `?`
+   - if the result is the direct operand of `expr (* | /) LITERAL` (either in the same
+     expression or via a `let`-bound variable), record `(key, literal)` as a **read** site.
+4. Group all recorded sites across the *entire file* (not just one function) by the
+   textual key expression. If a key has more than one distinct literal among its sites,
+   emit a finding per distinct literal, naming the disagreeing call sites.
+
+**Why it matters**
+
+This is the classic "one code path multiplies by `10_000_000` (7-decimal stroops),
+another path added later by a different contributor divides by `1_000_000` (6
+decimals)" bug. Neither call site is wrong in isolation - the defect only exists as a
+disagreement between independent call sites for what is meant to be the same logical
+quantity, which requires correlating scale-factor literals across the whole file by
+storage key rather than analyzing any single function in isolation.
+
+**Limitations**
+
+- The storage key is compared as raw token text (same approach as
+  `storage-has-get-mismatch` and `remove-without-has`): two call sites are considered
+  "the same key" only if their key expressions are textually identical, so
+  differently-named-but-equivalent key variables will not be correlated, and
+  identically-named-but-different variables in unrelated functions could produce a
+  false correlation.
+- The scale factor must be the *direct* operand of a `*`/`/` against an integer
+  literal, either inline or one `let` hop away; a scale factor buried behind a helper
+  function call, a second variable hop, or computed conditionally is not tracked.
+- Flow-insensitive: bindings are tracked in syntactic statement order without real
+  control-flow or shadowing analysis, so unusual reassignment patterns can confuse it.
+- Only `*` and `/` are considered; bit-shift-based scaling (`<<`/`>>`) is not detected.
+
+**Fixture:** `test-contracts/scale-factor-drift-vulnerable/`, `test-contracts/scale-factor-drift-safe/`

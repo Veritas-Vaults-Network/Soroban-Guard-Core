@@ -110,6 +110,7 @@ pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
+pub mod scale_factor_drift;
 pub mod sha256_empty;
 pub mod sig_verify_inverted;
 pub mod storage;
@@ -272,6 +273,7 @@ pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
+pub use scale_factor_drift::ScaleFactorDriftCheck;
 pub use sha256_empty::Sha256EmptyCheck;
 pub use sig_verify_inverted::SigVerifyInvertedCheck;
 pub use storage::UnsafeStoragePatternsCheck;
@@ -470,5 +472,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(ScaleFactorDriftCheck),
     ]
 }
