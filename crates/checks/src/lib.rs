@@ -89,6 +89,7 @@ pub mod no_param_no_auth;
 pub mod no_std;
 pub mod nonce_in_temp;
 pub mod nonce_increment_order;
+pub mod oracle_price_staleness;
 pub mod overflow;
 pub mod ownership_immediate;
 pub mod ownership_no_approval_invalidation;
@@ -251,6 +252,7 @@ pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_in_temp::NonceInTempCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
+pub use oracle_price_staleness::OraclePriceStalenessCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use ownership_immediate::OwnershipImmediateCheck;
 pub use ownership_no_approval_invalidation::OwnershipNoApprovalInvalidationCheck;
@@ -470,5 +472,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(OraclePriceStalenessCheck),
     ]
 }
