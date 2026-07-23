@@ -155,8 +155,10 @@ pub mod unintended_public_method;
 pub mod unlimited_allowance;
 pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
+pub mod upgrade_atomicity_order;
 pub mod upgrade_no_event;
 pub mod upgrade_no_schema_version;
+mod cfg;
 mod provenance;
 mod util;
 pub mod vec_get_unwrap;
@@ -323,6 +325,7 @@ pub use uncapped_fee::UncappedFeeCheck;
 pub use uncapped_slippage::UncappedSlippageCheck;
 pub use unlimited_allowance::UnlimitedAllowanceCheck;
 pub use unvalidated_price::UnvalidatedPriceCheck;
+pub use upgrade_atomicity_order::UpgradeAtomicityOrderCheck;
 pub use upgrade_no_event::UpgradeNoEventCheck;
 pub use upgrade_no_schema_version::UpgradeNoSchemaVersionCheck;
 pub use vec_map_tuple_convert::VecMapTupleConvertCheck;
@@ -490,5 +493,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
         Box::new(TtlDurationProvenanceCheck),
+        Box::new(UpgradeAtomicityOrderCheck),
     ]
 }

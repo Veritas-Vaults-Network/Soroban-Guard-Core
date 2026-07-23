@@ -300,3 +300,35 @@ If the `extend_to` duration is caller-controlled and unclamped, a caller can pas
 - The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
 **Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
+
+---
+
+## `upgrade-atomicity-order` (High)
+
+**Status:** Phase 3
+
+**What it detects**
+
+The ordering-correct sibling of `upgrade-no-schema-version` above. That check is satisfied as soon as a version/schema key is written *anywhere* in the file — it cannot tell whether the write actually happens before the upgrade on the path that reaches it. This check instead builds a control-flow graph (CFG) and asks a dominance question: for every call to `update_current_contract_wasm`, does a version/schema storage write unconditionally happen first on every path that reaches that call?
+
+Algorithm (implemented in `cfg.rs`, a small reusable CFG + dominance engine, and consumed by this check):
+
+1. For each `#[contractimpl]` function, build a CFG of its body. Straight-line statements form basic blocks; `if`/`else` and `match` each become a branch into a shared join block; `while`/`for` headers get both an edge into the body and an edge that skips it entirely (the condition may be false on entry); plain `loop` only gets the into-body edge (it always runs at least once); `return`/`break`/`continue` cut off fall-through in the current block.
+2. Whole-statement calls to another function defined in the same file (a free `fn` or any `impl` method, resolved by name — `foo(..)`, `Self::foo(..)`, `self.foo(..)`) are **inlined**: the callee's own CFG is spliced into the caller's graph at the call site, so a write or the upgrade call hidden behind a helper still participates in the same dominance analysis. Direct/mutual recursion is broken by a call-stack guard.
+3. Every call to `update_current_contract_wasm` and every storage `set` call (on a receiver chain containing `.storage()`) whose key tokens contain `"version"` or `"schema"` is recorded as a marker with the block it lands in and a monotonically increasing order key.
+4. Dominance is computed with the standard iterative algorithm (Cooper, Harvey & Kennedy) over the reachable subgraph. A version/schema write is considered to "happen before" an upgrade call only if its block dominates the upgrade call's block — or, when they share a block, if its order key is smaller (so a write placed *after* the upgrade call in the same straight-line block does not count).
+5. Any `update_current_contract_wasm` call for which no write marker satisfies step 4 is flagged, even if a schema-version write exists elsewhere in the function.
+
+**Why it matters**
+
+A version/schema write inside an `if` branch that doesn't cover every path to the upgrade call gives upgraded code no way to detect the storage layout it just inherited on the paths that skip it — the same silent-corruption risk `upgrade-no-schema-version` describes, except here it happens even though the "does a version key exist in this file" check passes.
+
+**Limitations**
+
+- Branch conditions nested inside arbitrary sub-expressions (e.g. an `if` used as a function-call argument rather than a whole statement or a `let` initializer) are not split into separate CFG nodes; they are scanned as part of the enclosing straight-line block.
+- Only one inlinable call is recognized per statement — the whole statement must itself be the call (or a `let` initializer whose entire right-hand side is the call). A write or upgrade call nested deeper inside a compound expression alongside other logic is still found by the marker scan, but is not itself a splice point for further inlining.
+- `?`-early-return is intentionally not modeled as a branch: since one of its two paths leaves the function entirely (irrelevant to whether an earlier write dominates a later call site) and the other continues normally, treating it as a plain expression does not introduce false negatives for this check.
+- Interprocedural inlining only resolves calls to functions defined in the same file; calls into other crates or trait objects are treated as opaque (not inlined, no markers assumed inside them).
+- Marker detection for both halves of the pattern is the same syntactic/textual matching used by `upgrade-no-schema-version` (method name `update_current_contract_wasm`; storage `set` whose key tokens contain `"version"`/`"schema"`) — this check adds ordering correctness on top, not semantic key-value verification.
+
+**Fixture:** `test-contracts/upgrade-atomicity-order-vulnerable/`, `test-contracts/upgrade-atomicity-order-safe/`
