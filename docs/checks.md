@@ -268,52 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `scale-factor-drift` (High)
+## `ttl-duration-provenance` (High)
 
-**Status:** Phase 2
+**Status:** Phase 3
 
 **What it detects**
 
-Correlates the fixed-point scale factor applied to a storage value across every call
-site in the file, grouped by the (textual) storage key, and flags any key for which
-more than one distinct integer literal is used:
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-1. For every `#[contractimpl]` function, walk the body in statement order tracking two
-   small maps: `variable -> storage key` (bound by an unscaled `let v = ...get(key)...;`)
-   and `variable -> scale literal` (bound by `let v = expr (* | /) LITERAL;`).
-2. At every storage `set(key, value)` call, if `value` (after stripping `&`) is itself
-   `expr (* | /) LITERAL` or a variable previously bound to such an expression, record
-   `(key, literal)` as a **write** site.
-3. At every storage `get(key)` call - optionally unwrapped through `.unwrap()`,
-   `.unwrap_or(..)`, `.unwrap_or_default()`, `.unwrap_or_else(..)`, `.expect(..)`, or `?`
-   - if the result is the direct operand of `expr (* | /) LITERAL` (either in the same
-     expression or via a `let`-bound variable), record `(key, literal)` as a **read** site.
-4. Group all recorded sites across the *entire file* (not just one function) by the
-   textual key expression. If a key has more than one distinct literal among its sites,
-   emit a finding per distinct literal, naming the disagreeing call sites.
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
+
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
+
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-This is the classic "one code path multiplies by `10_000_000` (7-decimal stroops),
-another path added later by a different contributor divides by `1_000_000` (6
-decimals)" bug. Neither call site is wrong in isolation - the defect only exists as a
-disagreement between independent call sites for what is meant to be the same logical
-quantity, which requires correlating scale-factor literals across the whole file by
-storage key rather than analyzing any single function in isolation.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- The storage key is compared as raw token text (same approach as
-  `storage-has-get-mismatch` and `remove-without-has`): two call sites are considered
-  "the same key" only if their key expressions are textually identical, so
-  differently-named-but-equivalent key variables will not be correlated, and
-  identically-named-but-different variables in unrelated functions could produce a
-  false correlation.
-- The scale factor must be the *direct* operand of a `*`/`/` against an integer
-  literal, either inline or one `let` hop away; a scale factor buried behind a helper
-  function call, a second variable hop, or computed conditionally is not tracked.
-- Flow-insensitive: bindings are tracked in syntactic statement order without real
-  control-flow or shadowing analysis, so unusual reassignment patterns can confuse it.
-- Only `*` and `/` are considered; bit-shift-based scaling (`<<`/`>>`) is not detected.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/scale-factor-drift-vulnerable/`, `test-contracts/scale-factor-drift-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
