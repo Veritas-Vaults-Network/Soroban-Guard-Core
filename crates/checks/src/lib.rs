@@ -25,6 +25,7 @@ pub mod authorize_empty;
 pub mod balance_negative_check;
 pub mod balance_not_verified_after_transfer;
 pub mod balance_overflow;
+pub mod batch_partial_write;
 pub mod broken_pause;
 pub mod bump_after_read;
 pub mod bump_to_ttl;
@@ -35,6 +36,7 @@ pub mod bytes_oversized;
 pub mod catch_unwind;
 pub mod contracterror_attr;
 pub mod contracttype;
+pub mod cross_token_provenance_mix;
 pub mod crypto_no_cache;
 pub mod current_contract_unwrap;
 pub mod dead_storage_code;
@@ -62,6 +64,7 @@ pub mod instance_remove_critical;
 pub mod instance_set_no_has;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod interprocedural_supply_cap;
 pub mod invalid_address_literal;
 pub mod invoke_func_from_input;
 pub mod invoke_nonexistent_func;
@@ -89,6 +92,7 @@ pub mod no_param_no_auth;
 pub mod no_std;
 pub mod nonce_in_temp;
 pub mod nonce_increment_order;
+pub mod oracle_price_staleness;
 pub mod overflow;
 pub mod ownership_immediate;
 pub mod ownership_no_approval_invalidation;
@@ -111,6 +115,7 @@ pub mod secp256k1_unchecked;
 pub mod self_transfer;
 pub mod sequence_as_key;
 pub mod sequence_nonce;
+pub mod scale_factor_drift;
 pub mod sha256_empty;
 pub mod sig_verify_inverted;
 pub mod storage;
@@ -119,6 +124,7 @@ pub mod storage_key_collision;
 pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod storage_type_version;
+pub mod interprocedural_storage_toctou;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
@@ -133,6 +139,7 @@ pub mod transfer_to_self;
 pub mod try_into_unwrap;
 pub mod ttl_arg_order;
 pub mod ttl_before_write;
+pub mod ttl_duration_provenance;
 pub mod ttl_every_call;
 pub mod ttl_min_zero;
 pub mod ttl_uniform;
@@ -151,6 +158,7 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 pub mod upgrade_no_event;
 pub mod upgrade_no_schema_version;
+mod provenance;
 mod util;
 pub mod vec_get_unwrap;
 pub mod vec_map_tuple_convert;
@@ -166,6 +174,7 @@ pub mod wrapping_balance_op;
 pub mod zero_amount;
 pub mod zero_divisor;
 pub mod zero_transfer_event;
+pub mod withdrawal_aggregate_bypass;
 
 pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use address_from_str::AddressFromStrCheck;
@@ -192,6 +201,7 @@ pub use authorize_empty::AuthorizeEmptyCheck;
 pub use balance_negative_check::BalanceNegativeCheck;
 pub use balance_not_verified_after_transfer::BalanceNotVerifiedAfterTransferCheck;
 pub use balance_overflow::BalanceOverflowCheck;
+pub use batch_partial_write::BatchPartialWriteCheck;
 pub use broken_pause::BrokenPauseCheck;
 pub use bump_after_read::BumpAfterReadCheck;
 pub use bump_to_ttl::BumpToTtlCheck;
@@ -202,6 +212,7 @@ pub use bytes_oversized::BytesOversizedCheck;
 pub use catch_unwind::CatchUnwindCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
+pub use cross_token_provenance_mix::CrossTokenProvenanceMixCheck;
 pub use crypto_no_cache::CryptoNoCacheCheck;
 pub use current_contract_unwrap::CurrentContractUnwrapCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
@@ -228,6 +239,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_set_no_has::InstanceSetNoHasCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
+pub use interprocedural_supply_cap::InterproceduralSupplyCapCheck;
 pub use invoke_func_from_input::InvokeFuncFromInputCheck;
 pub use invoke_result_untrusted::InvokeResultUntrustedCheck;
 pub use invoke_store_no_event::InvokeStoreNoEventCheck;
@@ -252,6 +264,7 @@ pub use no_param_no_auth::NoParamNoAuthCheck;
 pub use no_std::NoStdCheck;
 pub use nonce_in_temp::NonceInTempCheck;
 pub use nonce_increment_order::NonceIncrementOrderCheck;
+pub use oracle_price_staleness::OraclePriceStalenessCheck;
 pub use overflow::UncheckedArithmeticCheck;
 pub use ownership_immediate::OwnershipImmediateCheck;
 pub use ownership_no_approval_invalidation::OwnershipNoApprovalInvalidationCheck;
@@ -274,6 +287,7 @@ pub use secp256k1_unchecked::Secp256k1UncheckedCheck;
 pub use self_transfer::SelfTransferCheck;
 pub use sequence_as_key::SequenceAsKeyCheck;
 pub use sequence_nonce::SequenceNonceCheck;
+pub use scale_factor_drift::ScaleFactorDriftCheck;
 pub use sha256_empty::Sha256EmptyCheck;
 pub use sig_verify_inverted::SigVerifyInvertedCheck;
 pub use storage::UnsafeStoragePatternsCheck;
@@ -282,6 +296,7 @@ pub use storage_key_collision::StorageKeyCollisionCheck;
 pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use storage_type_version::StorageTypeVersionCheck;
+pub use interprocedural_storage_toctou::InterproceduralStorageTocTouCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use tier_key_collision::TierKeyCollisionCheck;
@@ -298,6 +313,7 @@ pub use ttl_before_write::TtlBeforeWriteCheck;
 pub use ttl_every_call::TtlEveryCallCheck;
 pub use ttl_min_zero::TtlMinZeroCheck;
 pub use ttl_uniform::TtlUniformCheck;
+pub use ttl_duration_provenance::TtlDurationProvenanceCheck;
 pub use unauth_address_in_struct::UnauthAddressInStructCheck;
 pub use unauth_fee_setter::UnauthFeeSetterCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
@@ -324,6 +340,7 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use zero_divisor::ZeroDivisorCheck;
 pub use zero_transfer_event::ZeroTransferEventCheck;
+pub use withdrawal_aggregate_bypass::WithdrawalAggregateBypassCheck;
 
 pub use dead_storage_code::DeadStorageCodeCheck;
 
@@ -421,6 +438,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MigrationGuardCheck),
         Box::new(WithdrawAuthCheck),
         Box::new(BrokenPauseCheck),
+        Box::new(BatchPartialWriteCheck),
         Box::new(BytesNotBytesNCheck),
         Box::new(DebugEntrypointCheck),
         Box::new(ExtendTtlInLoopCheck),
@@ -460,6 +478,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TokenSharedStorageCheck),
         Box::new(AdminNoEventCheck),
         Box::new(UnauthorizedStorageReadCheck),
+        Box::new(InterproceduralStorageTocTouCheck),
         Box::new(TierKeyCollisionCheck),
         Box::new(StorageTypeVersionCheck),
         Box::new(AdminZeroAddressCheck),
@@ -473,5 +492,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(TtlDurationProvenanceCheck),
     ]
 }

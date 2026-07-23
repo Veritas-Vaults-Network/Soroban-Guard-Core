@@ -268,41 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `revoked-admin-reuse` (High)
+## `ttl-duration-provenance` (High)
 
-**Status:** Phase 2
+**Status:** Phase 3
 
 **What it detects**
 
-Contracts that maintain a "revoked / removed admins" collection for audit or compliance purposes, but whose admin-rotation function never checks the incoming address against that collection before accepting it as the new admin.
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-The check runs in two passes over all `#[contractimpl]` function bodies in the file:
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
 
-**Pass 1 — revocation-collection detection**
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
 
-Walk every identifier and string literal in every `#[contractimpl]` function body. Any identifier or key string whose lowercased text contains one of the following revocation keywords is recorded as a "revocation token":
-
-`revoked`, `removed`, `blacklist`, `denylist`, `banned`, `blocklist`, `blocked`
-
-If no such token is found anywhere in the file, the check produces no findings.
-
-**Pass 2 — admin-setter without membership check**
-
-For each function whose name matches the admin-setter heuristic (exact members of `ADMIN_SETTER_NAMES`: `set_admin`, `set_owner`, `transfer_ownership`, `update_admin`, `change_admin`, `rotate_admin`, `assign_admin`, `replace_admin`, `new_admin`; or the broader rule: name contains a setter verb *and* contains `admin` or `owner`):
-
-1. The function must accept at least one `Address` parameter.
-2. The function must contain at least one storage write (`set`, `remove`, `push_back`, or `insert` on a receiver chain that includes `.storage()`).
-3. If conditions 1 and 2 hold, the body is scanned for a `.contains(`, `.has(`, or `.contains_key(` method call whose receiver or arguments involve a revocation-keyword identifier. If no such call is found, the function is flagged.
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-An admin-rotation mechanism that maintains a "removed admins" list for compliance reasons silently breaks if `set_admin(new_admin)` never cross-checks `new_admin` against that list. A previously revoked admin can be re-appointed without detection, defeating the entire removal mechanism.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- Pure syntactic analysis: no type inference, no inter-procedural call graph. A helper function that performs the membership check internally will produce a false positive if not inlined.
-- Only detects revoked-admins collections that exist in the *same* file as the admin-setter.
-- The membership-check detection is heuristic: any `.contains(` / `.has(` call whose receiver or arguments contain a revocation-keyword identifier clears the finding, regardless of whether it is actually guarding the storage write.
-- The collection-detection pass fires on any identifier that *contains* a revocation keyword (e.g. a local variable named `not_revoked` would match `revoked`). Narrow your variable names to avoid false negatives in unusual cases.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/revoked-admin-reuse-vulnerable/`, `test-contracts/revoked-admin-reuse-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
