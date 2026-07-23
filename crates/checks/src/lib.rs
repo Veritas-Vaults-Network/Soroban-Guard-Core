@@ -62,6 +62,7 @@ pub mod instance_remove_critical;
 pub mod instance_set_no_has;
 pub mod instance_ttl;
 pub mod instance_vec_growth;
+pub mod interprocedural_supply_cap;
 pub mod invalid_address_literal;
 pub mod invoke_func_from_input;
 pub mod invoke_nonexistent_func;
@@ -227,6 +228,7 @@ pub use instance_remove_critical::InstanceRemoveCriticalCheck;
 pub use instance_set_no_has::InstanceSetNoHasCheck;
 pub use instance_ttl::InstanceTtlCheck;
 pub use instance_vec_growth::InstanceVecGrowthCheck;
+pub use interprocedural_supply_cap::InterproceduralSupplyCapCheck;
 pub use invoke_func_from_input::InvokeFuncFromInputCheck;
 pub use invoke_result_untrusted::InvokeResultUntrustedCheck;
 pub use invoke_store_no_event::InvokeStoreNoEventCheck;
@@ -470,5 +472,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(InterproceduralSupplyCapCheck),
     ]
 }
