@@ -167,6 +167,7 @@ pub mod wrapping_balance_op;
 pub mod zero_amount;
 pub mod zero_divisor;
 pub mod zero_transfer_event;
+pub mod withdrawal_aggregate_bypass;
 
 pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use address_from_str::AddressFromStrCheck;
@@ -325,6 +326,7 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use zero_divisor::ZeroDivisorCheck;
 pub use zero_transfer_event::ZeroTransferEventCheck;
+pub use withdrawal_aggregate_bypass::WithdrawalAggregateBypassCheck;
 
 pub use dead_storage_code::DeadStorageCodeCheck;
 
