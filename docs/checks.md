@@ -268,28 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `interprocedural-storage-toctou` (High)
+## `ttl-duration-provenance` (High)
 
-**Status:** Phase 2
+**Status:** Phase 3
 
 **What it detects**
 
-Using the call graph, for each public `#[contractimpl]` entrypoint, this check finds every storage `has`/`get` read reachable from it and every storage `set`/`remove` write reachable from it. It flags when:
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-1. A read and a write operate on the **same storage key** (structural token comparison) and the **same storage tier** (`persistent`/`instance`/`temporary`).
-2. The read happens in a **different function** than the write (i.e. the read and write are not in the same function body).
-3. The read precedes the write (`read.line < write.line`).
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
 
-This catches the common Soroban pattern where a `claim()` entrypoint calls `already_claimed()` (which does `has()`) and then `do_claim()` (which does `set()`) — two separate functions with no shared local variable, invisible to single-function checks like `storage-has-get-race`.
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
+
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-Without a re-check guard (early return / panic / assert) structurally between the read and the write, an attacker can race the two calls by submitting two transactions that execute the `has()` check before either executes the `set()` write, leading to double-claim, double-withdrawal, or similar TOCTOU exploits.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- Only follows direct `Self::foo(...)` and `foo(...)` calls within the same `#[contractimpl]` impl block. Does not follow calls through trait methods, external contracts, or closures.
-- Key equality is determined by structural token-string comparison, not semantic equivalence. Two different expressions that produce the same runtime key (e.g. `&KEY` vs `&Symbol::new(&env, "key")`) are treated as different keys.
-- The check does not analyze guards (early returns, panics) structurally — it relies on the read/write being in different functions as its primary signal. A safe pattern that folds the re-check into the write function (e.g. `already_claimed_and_set`) is not flagged.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/interprocedural-storage-toctou-vulnerable/`, `test-contracts/interprocedural-storage-toctou-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
