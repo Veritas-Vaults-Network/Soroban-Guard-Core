@@ -102,7 +102,7 @@ fn collect_ops_visitor(
                             } else {
                                 OpKind::Write
                             };
-                            ops.push(StorageOp {
+                            self.ops.push(StorageOp {
                                 kind,
                                 key_tokens: expr_to_string(arg),
                                 tier,
@@ -124,7 +124,7 @@ fn collect_ops_visitor(
                     for item in self.impl_items {
                         if let ImplItem::Fn(m) = item {
                             if m.sig.ident == callee {
-                                let inner = Inner {
+                                let mut inner = Inner {
                                     current_fn: &callee,
                                     impl_items: self.impl_items,
                                     ops: &mut *self.ops,
