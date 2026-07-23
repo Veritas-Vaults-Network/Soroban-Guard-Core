@@ -25,6 +25,7 @@ pub mod authorize_empty;
 pub mod balance_negative_check;
 pub mod balance_not_verified_after_transfer;
 pub mod balance_overflow;
+pub mod batch_partial_write;
 pub mod broken_pause;
 pub mod bump_after_read;
 pub mod bump_to_ttl;
@@ -195,6 +196,7 @@ pub use authorize_empty::AuthorizeEmptyCheck;
 pub use balance_negative_check::BalanceNegativeCheck;
 pub use balance_not_verified_after_transfer::BalanceNotVerifiedAfterTransferCheck;
 pub use balance_overflow::BalanceOverflowCheck;
+pub use batch_partial_write::BatchPartialWriteCheck;
 pub use broken_pause::BrokenPauseCheck;
 pub use bump_after_read::BumpAfterReadCheck;
 pub use bump_to_ttl::BumpToTtlCheck;
@@ -425,6 +427,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(MigrationGuardCheck),
         Box::new(WithdrawAuthCheck),
         Box::new(BrokenPauseCheck),
+        Box::new(BatchPartialWriteCheck),
         Box::new(BytesNotBytesNCheck),
         Box::new(DebugEntrypointCheck),
         Box::new(ExtendTtlInLoopCheck),
