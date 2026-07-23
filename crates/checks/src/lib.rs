@@ -119,6 +119,7 @@ pub mod storage_key_collision;
 pub mod storage_no_cache;
 pub mod storage_type_confusion;
 pub mod storage_type_version;
+pub mod interprocedural_storage_toctou;
 pub mod temp_get_no_has;
 pub mod temp_read_in_view;
 pub mod temp_set_no_ttl;
@@ -133,6 +134,7 @@ pub mod transfer_to_self;
 pub mod try_into_unwrap;
 pub mod ttl_arg_order;
 pub mod ttl_before_write;
+pub mod ttl_duration_provenance;
 pub mod ttl_every_call;
 pub mod ttl_min_zero;
 pub mod ttl_uniform;
@@ -151,6 +153,7 @@ pub mod unvalidated_invoke_target;
 pub mod unvalidated_price;
 pub mod upgrade_no_event;
 pub mod upgrade_no_schema_version;
+mod provenance;
 mod util;
 pub mod vec_get_unwrap;
 pub mod vec_map_tuple_convert;
@@ -166,6 +169,7 @@ pub mod wrapping_balance_op;
 pub mod zero_amount;
 pub mod zero_divisor;
 pub mod zero_transfer_event;
+pub mod withdrawal_aggregate_bypass;
 
 pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use address_from_str::AddressFromStrCheck;
@@ -282,6 +286,7 @@ pub use storage_key_collision::StorageKeyCollisionCheck;
 pub use storage_no_cache::StorageNoCacheCheck;
 pub use storage_type_confusion::StorageTypeConfusionCheck;
 pub use storage_type_version::StorageTypeVersionCheck;
+pub use interprocedural_storage_toctou::InterproceduralStorageTocTouCheck;
 pub use temp_get_no_has::TempGetNoHasCheck;
 pub use temp_set_no_ttl::TempSetNoTtlCheck;
 pub use tier_key_collision::TierKeyCollisionCheck;
@@ -298,6 +303,7 @@ pub use ttl_before_write::TtlBeforeWriteCheck;
 pub use ttl_every_call::TtlEveryCallCheck;
 pub use ttl_min_zero::TtlMinZeroCheck;
 pub use ttl_uniform::TtlUniformCheck;
+pub use ttl_duration_provenance::TtlDurationProvenanceCheck;
 pub use unauth_address_in_struct::UnauthAddressInStructCheck;
 pub use unauth_fee_setter::UnauthFeeSetterCheck;
 pub use unauth_sensitive_read::UnauthSensitiveReadCheck;
@@ -324,6 +330,7 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use zero_divisor::ZeroDivisorCheck;
 pub use zero_transfer_event::ZeroTransferEventCheck;
+pub use withdrawal_aggregate_bypass::WithdrawalAggregateBypassCheck;
 
 pub use dead_storage_code::DeadStorageCodeCheck;
 
@@ -460,6 +467,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TokenSharedStorageCheck),
         Box::new(AdminNoEventCheck),
         Box::new(UnauthorizedStorageReadCheck),
+        Box::new(InterproceduralStorageTocTouCheck),
         Box::new(TierKeyCollisionCheck),
         Box::new(StorageTypeVersionCheck),
         Box::new(AdminZeroAddressCheck),
@@ -473,5 +481,6 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TryIntoUnwrapCheck),
         Box::new(TimestampAsNonceCheck),
         Box::new(WhileNoBoundCheck),
+        Box::new(TtlDurationProvenanceCheck),
     ]
 }

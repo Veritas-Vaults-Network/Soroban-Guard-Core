@@ -268,89 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `revoked-admin-reuse` (High)
+## `ttl-duration-provenance` (High)
 
-**Status:** Phase 2
-
-**What it detects**
-
-Contracts that maintain a "revoked / removed admins" collection for audit or compliance purposes, but whose admin-rotation function never checks the incoming address against that collection before accepting it as the new admin.
-
-The check runs in two passes over all `#[contractimpl]` function bodies in the file:
-
-**Pass 1 — revocation-collection detection**
-
-Walk every identifier and string literal in every `#[contractimpl]` function body. Any identifier or key string whose lowercased text contains one of the following revocation keywords is recorded as a "revocation token":
-
-`revoked`, `removed`, `blacklist`, `denylist`, `banned`, `blocklist`, `blocked`
-
-If no such token is found anywhere in the file, the check produces no findings.
-
-**Pass 2 — admin-setter without membership check**
-
-For each function whose name matches the admin-setter heuristic (exact members of `ADMIN_SETTER_NAMES`: `set_admin`, `set_owner`, `transfer_ownership`, `update_admin`, `change_admin`, `rotate_admin`, `assign_admin`, `replace_admin`, `new_admin`; or the broader rule: name contains a setter verb *and* contains `admin` or `owner`):
-
-1. The function must accept at least one `Address` parameter.
-2. The function must contain at least one storage write (`set`, `remove`, `push_back`, or `insert` on a receiver chain that includes `.storage()`).
-3. If conditions 1 and 2 hold, the body is scanned for a `.contains(`, `.has(`, or `.contains_key(` method call whose receiver or arguments involve a revocation-keyword identifier. If no such call is found, the function is flagged.
-
-**Why it matters**
-
-An admin-rotation mechanism that maintains a "removed admins" list for compliance reasons silently breaks if `set_admin(new_admin)` never cross-checks `new_admin` against that list. A previously revoked admin can be re-appointed without detection, defeating the entire removal mechanism.
-
-**Limitations**
-
-- Pure syntactic analysis: no type inference, no inter-procedural call graph. A helper function that performs the membership check internally will produce a false positive if not inlined.
-- Only detects revoked-admins collections that exist in the *same* file as the admin-setter.
-- The membership-check detection is heuristic: any `.contains(` / `.has(` call whose receiver or arguments contain a revocation-keyword identifier clears the finding, regardless of whether it is actually guarding the storage write.
-- The collection-detection pass fires on any identifier that *contains* a revocation keyword (e.g. a local variable named `not_revoked` would match `revoked`). Narrow your variable names to avoid false negatives in unusual cases.
-
-**Fixture:** `test-contracts/revoked-admin-reuse-vulnerable/`, `test-contracts/revoked-admin-reuse-safe/`
-
----
-
-## `batch-partial-write` (High)
-
-**Status:** Phase 2
+**Status:** Phase 3
 
 **What it detects**
 
-A loop over a Vec/iterable parameter that writes to storage **and then** can exit early (via `return`, `?`, or `panic!`) within the same iteration. If a later element triggers the early exit, all earlier elements have already been permanently written — the batch is partially applied with no rollback.
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-```rust
-// ❌ Vulnerable: write before validation per element
-for item in items.iter() {
-    env.storage().persistent().set(&item.key, &item.value); // committed
-    if !validate(&item) {
-        return Err(ContractError::Invalid); // too late — earlier writes persist
-    }
-}
-```
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
 
-**Detection algorithm**
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
 
-For each `for` / `while` loop inside a `#[contractimpl]` function:
-
-1. **Collect storage-mutation events** — any `.set()`, `.remove()`, `.push_back()`, or `.insert()` call whose receiver chain includes `.storage()`.
-2. **Collect early-exit events** — `return` expressions, `?` operators, and `panic!` / `todo!` / `unreachable!` macro invocations.
-3. **Flag** if the loop body has at least one mutation event followed (in textual order) by at least one early-exit event within the same iteration.
-4. **Suppress** the finding when the enclosing function contains two or more top-level loops over the **same** iterable variable and at least one of those loops is mutation-free (the safe two-pass idiom):
-
-```rust
-// ✅ Safe two-pass idiom
-for item in items.iter() { validate(&item)?; }   // no writes
-for item in items.iter() { env.storage()...set(...); }  // no exits
-```
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-Soroban's contract-local storage does not roll back on a Rust-level `return Err(…)` — only a full transaction abort (host trap) would undo earlier writes. A caller who submits a batch where element N fails validation ends up with elements 0…N-1 persisted and N…end skipped, silently corrupting contract state.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- Statement ordering is used as a CFG approximation; a mutation inside an always-taken branch that precedes a conditional exit is not distinguished from one that may not execute (possible false positive).
-- Two-pass suppression requires both loops to reference the same iterable variable name; a rename or intermediate binding defeats it (possible false positive).
-- Mutations inside helper-function calls are not tracked (false negatives).
-- Nested loops are not recursed into; only top-level loops in the function are checked.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/batch-partial-write-vulnerable/`, `test-contracts/batch-partial-write-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
