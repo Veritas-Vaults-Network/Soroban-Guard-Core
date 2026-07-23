@@ -268,32 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `interprocedural-supply-cap-bypass` (High)
+## `ttl-duration-provenance` (High)
 
 **Status:** Phase 3
 
 **What it detects**
 
-`mint-no-cap` and `supply-cap-not-enforced` (see above) each look at a single function named `mint` in isolation. That misses a whole-file gap: a second way to increase total supply — an admin, emergency, or migration entrypoint, or a helper reachable from more than one entrypoint — that increments the same total-supply key but never repeats the cap check that `mint` enforces on its own path.
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-This check builds a small, file-local, name-resolved call graph and reasons about it per entrypoint:
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
 
-1. **Registry** — every named function body in the file is collected: `#[contractimpl]` methods, methods in any other `impl` block (a common place to put private helpers), and free `fn` items.
-2. **Call edges** — inside each function body, every `syn::ExprCall` whose callee is a path expression (`foo(..)`, `Self::foo(..)`, `Type::foo(..)`) contributes an edge to the last path segment's identifier, if that name exists in the registry.
-3. **Per-function summary** — each function body is scanned (matching the same heuristics as `mint-no-cap`) for: a storage `set` call on a receiver chain containing `.storage()` whose **key argument** contains a supply-key hint (`supply`, `total`, `minted`, `cap`, `max`, case-insensitive), and any `<=`/`<` binary comparison anywhere in the body (a proxy for a cap check, including inside `assert!`/`assert_eq!` macro bodies).
-4. **Reachability** — for every `pub fn` inside a `#[contractimpl]` block, the check does a breadth-first walk of the call graph starting at that entrypoint to compute its full reachable set of functions (itself plus every helper it can reach, transitively).
-5. **Per-entrypoint verdict** — within *that entrypoint's own reachable set* (not the whole file), if any reachable function writes the total-supply key and **no** reachable function contains a cap comparison, the entrypoint is flagged. This check is intentionally repeated independently per entrypoint: a cap check reachable from `mint` does **not** clear a finding on `emergency_mint` unless `emergency_mint` can also reach it (e.g. by calling the same checked helper).
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
+
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-A single-function check like `mint-no-cap` will pass a file where `mint` is fully capped but a second entrypoint (`emergency_mint`, `admin_mint`, `migrate_supply`, …) writes the identical total-supply storage value with no cap comparison anywhere on its call path. The cap is enforced only on paper, and the second entrypoint silently allows unbounded inflation. Because Soroban contracts commonly factor shared logic into private helpers, a bypass can also hide one call away rather than inline in the entrypoint body.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- **Name-resolved, not type-resolved**: call edges are matched on the callee's final path segment identifier against the file's function registry. Two differently-scoped functions that happen to share a name will be treated as the same node; a call through a trait object, closure, or function pointer is invisible to this graph.
-- **File-local only**: the registry and call graph are built from a single `syn::File`. A helper defined in another module or crate is not resolved, so a supply write that only happens through a cross-file call will not be seen by this check (consistent with every other check in this analyzer, which runs per-file with no shared state).
-- **Same key heuristic as `mint-no-cap`/`supply-cap-not-enforced`**: the total-supply key is recognized by a hint substring on the `set` call's key argument, not by tracking a specific storage key value across functions. A `set` call whose key argument happens to contain one of the hint words but is unrelated to total supply can still be treated as a supply write.
-- **`<=`/`<` anywhere in the reachable set, not tied to the write**: as with the single-function checks, any comparison using `Le`/`Lt` counts as a cap check, even if it does not actually bound the specific value being written.
-- Does not model recursion depth or short-circuiting; the BFS simply visits each reachable function once.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/interprocedural-supply-cap-vulnerable/`, `test-contracts/interprocedural-supply-cap-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
