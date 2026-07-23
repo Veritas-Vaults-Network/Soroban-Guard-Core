@@ -268,81 +268,35 @@ When a contract upgrades itself via `env.deployer().update_current_contract_wasm
 
 ---
 
-## `oracle-price-staleness` (High)
+## `ttl-duration-provenance` (High)
 
 **Status:** Phase 3
 
 **What it detects**
 
-Unlike every other check in this crate — a single `syn::visit::Visit` walk over one
-function body — this check builds a small **call graph** over every function defined in
-the file (free functions and every method in every `impl` block, not just
-`#[contractimpl]` ones) and asks a reachability question instead of a syntactic one.
+In `#[contractimpl]` methods, any call to `extend_ttl` on a storage tier (`persistent()`, `temporary()`, or `instance()`) where the **duration** argument (the `extend_to` / `max_ttl` value) traces back to a function parameter without `.min()` or `.clamp()` applied anywhere on the provenance chain.
 
-1. **Find the tracked price.** Per function, look for a `let` binding whose initializer
-   is a struct literal with a field whose expression contains an
-   `env.ledger().timestamp()` chain (the "freshness field", e.g. `last_updated`) and at
-   least one other field (the "price fields", e.g. `price`). Then find where that local
-   (or an inline struct literal) is passed to `<...storage...>.set(&KEY, &value)` and
-   record `KEY` together with the freshness field name and price field names. If no such
-   write pattern exists anywhere in the file, the check produces no findings.
-2. **Find every read site.** Any function containing `<...storage...>.get(&KEY)` for a
-   tracked `KEY` is a read site.
-3. **Find every freshness-check function.** Any function containing a comparison
-   (`<`, `<=`, `>`, `>=`) where one side's subtree contains a timestamp signal
-   (`env.ledger().timestamp()` inline, or a local bound to it, e.g.
-   `let now = env.ledger().timestamp();`) and the other side's subtree contains the
-   tracked freshness field (by name) is a freshness checker. `assert!`/`panic!` macro
-   bodies are parsed as a comma-separated expression list so `assert!(cond, "msg")`
-   still exposes `cond`.
-4. **Find every arithmetic-use site.** Any function that performs `+ - * / %` on a value
-   sourced from the tracked key — a local bound from the `.get(&KEY)` call, a `.field`
-   access on that local matching a tracked price field name, or the `.get(&KEY)` chain
-   used inline — is a use site.
-5. **Reachability.** Build a directed call graph (caller → callee edges resolved by
-   matching call/method-call idents against known function names in the file — no type
-   inference, same heuristic style as the rest of this crate). For every public
-   `#[contractimpl]` entry point, compute its forward-reachable set (every function it
-   transitively calls, including itself). For each read site `R`, take the union of the
-   reachable sets of every entry point whose reachable set contains `R` (or, if none
-   does, `R`'s own reachable set as a fallback root). If that union contains an
-   arithmetic-use site but **no** freshness-check function anywhere in it, flag the
-   arithmetic-use site.
+The check uses a shared provenance-tracing engine (`provenance.rs`) that follows value flow through:
 
-This is why a `check_price_fresh` helper clears the finding even when it is called from a
-*different* function than the one that ultimately does the arithmetic: the helper only
-has to be reachable from the same public entry point as the read and the use, not textually
-inside the same function body.
+1. **`let` bindings** — `let dur = param;` followed by `extend_ttl(..., dur)` traces `dur` back to `param`.
+2. **Helper function return values** — `let dur = forward(param);` where `forward` returns its argument traces through the call graph with argument substitution.
+3. **Method call chains** — `requested_ttl.min(MAX_TTL)` is recognized as clamped; the check stops tracing and passes.
+4. **`.min()` / `.clamp()` detection** — if any node on the chain applies a `.min()` or `.clamp()`, the origin is classified as `Clamped` and no finding is produced.
+
+Argument forms handled:
+- `env.storage().persistent().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().temporary().extend_ttl(&key, threshold, extend_to)` — checks `args[2]`
+- `env.storage().instance().extend_ttl(threshold, extend_to)` — checks `args[1]`
 
 **Why it matters**
 
-A price paired with a `last_updated` timestamp is only as safe as the *weakest* function
-that reads it. If even one code path fetches the price and uses it in a calculation
-without checking `env.ledger().timestamp() - last_updated <= MAX_AGE` (or similar)
-anywhere on its call path, a stalled or manipulated oracle feed can be used for pricing
-indefinitely.
+If the `extend_to` duration is caller-controlled and unclamped, a caller can pass an extremely large TTL value that either wastes storage rent indefinitely or causes the `extend_ttl` host call to fail/panic depending on ledger limits. The bug is invisible at the call site — there is nothing syntactically wrong with `env.storage().persistent().extend_ttl(&key, 100, requested_ttl)`. Only provenance tracing reveals that `requested_ttl` is unbounded.
 
 **Limitations**
 
-- **Order-insensitive.** Reachability does not model control flow or call order: a
-  freshness check that runs *after* the price is already used (or on a branch that never
-  actually executes before the use) still clears the finding, because there is no CFG or
-  dominance analysis here — only "is this function present in the transitively-called
-  set." A real interprocedural analysis would need a CFG to enforce ordering.
-  Contributions welcome.
-- **Name-based call resolution.** Calls are matched by identifier name against functions
-  defined in the same file, not by type-checked method resolution. Two identically named
-  methods on different types in the same file, or a call resolved through a trait object,
-  can produce a spurious edge or miss one entirely.
-- **File-scoped.** Like every check in this crate, the call graph is built from a single
-  parsed `syn::File`; a freshness check defined in a different file (module) is invisible.
-- **Struct-literal pattern only.** The write-site pattern requires a struct literal with a
-  timestamp-bearing field (inline in the `.set()` call, or bound to a local first). A
-  price and its timestamp stored as two independent `.set()` calls to unrelated keys is
-  not correlated and will not be tracked.
-- **No taint through return values.** If a helper calls `.get(&KEY)` and *returns* the
-  price to its caller (rather than the caller calling `.get()` directly), the caller's use
-  of the returned value is not traced back to the tracked key — only direct reads and
-  direct field access on a locally-bound `.get()` result are tracked.
+- Hop limit of 3 for cross-function tracing; deeper call chains beyond 3 hops produce `Untraceable` (silently skipped, no false positive).
+- Only follows free functions and `#[contractimpl]` methods within the same file. Cross-crate helpers are not analyzed.
+- Does not analyze closures or trait method implementations.
+- The check is purely structural/dataflow; it does not perform type analysis. A parameter named `ttl` is flagged the same way regardless of whether it is `u32`, `i128`, or `bool`.
 
-**Fixture:** `test-contracts/oracle-price-staleness-vulnerable/`, `test-contracts/oracle-price-staleness-safe/`
+**Fixture:** `test-contracts/ttl-duration-provenance-vulnerable/`, `test-contracts/ttl-duration-provenance-safe/`
