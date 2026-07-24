@@ -332,3 +332,38 @@ A version/schema write inside an `if` branch that doesn't cover every path to th
 - Marker detection for both halves of the pattern is the same syntactic/textual matching used by `upgrade-no-schema-version` (method name `update_current_contract_wasm`; storage `set` whose key tokens contain `"version"`/`"schema"`) — this check adds ordering correctness on top, not semantic key-value verification.
 
 **Fixture:** `test-contracts/upgrade-atomicity-order-vulnerable/`, `test-contracts/upgrade-atomicity-order-safe/`
+
+---
+
+## `governance-threshold-drift` (High)
+
+**Status:** Phase 3
+
+**What it detects**
+
+Across all `#[contractimpl]` methods in a file whose names contain governance-related keywords (`propose`, `vote`, `execute`, `quorum`, `threshold`, `approve`, `ratify`, `finalize`, `submit`):
+
+1. Binary comparisons (`>=`, `>`, `<=`, `<`, `==`) where one operand is a "counter-like" variable (name contains `vote`, `signer`, `count`, `yes`, `approval`, `support`, `nay`, or `voter`) and the other is an integer literal or a named `const` resolved to its literal value.
+2. The check groups these threshold comparisons by the normalized counter variable name across all governance functions.
+3. If two or more governance functions use different threshold values for the same counter variable, each mismatched site is flagged.
+
+**Why it matters**
+
+This is the governance analogue of `scale-factor-drift`: a `propose()` function gates on `signers >= 3`, but an `execute()` function — added later or maintained by someone else — gates on `signers >= 2`. Each call site is internally consistent; the bug only exists as a disagreement between independent call sites for what is meant to be the same quorum concept. An attacker can exploit this to execute a proposal that never met the propose gate's threshold.
+
+**Algorithm**
+
+1. Collect all file-level `const` definitions and resolve their literal values.
+2. For each `#[contractimpl]` method whose name contains a governance keyword, scan the function body for binary comparison expressions.
+3. For each comparison, check if one side matches the counter-variable heuristic and the other side is an integer literal or resolvable named const.
+4. Group all recorded threshold sites by the normalized counter variable name.
+5. Within each group, if more than one distinct threshold value exists, flag every site using a threshold that differs from at least one other site.
+
+**Limitations**
+
+- The governance-function heuristic is name-based: functions like `process_proposal` are recognized, but a governance function named `do_thing` is not.
+- The counter-variable heuristic is name-based: `signers >= 3` is recognized, but `s >= 3` (single-letter alias) is not.
+- Only binary comparisons in the function body are scanned; threshold checks hidden behind helper function calls are not resolved cross-functionally.
+- Named consts are resolved only at file scope; local `let` bindings are not followed to their literal origins for threshold grouping.
+
+**Fixture:** `test-contracts/governance-threshold-drift-vulnerable/`, `test-contracts/governance-threshold-drift-safe/`
