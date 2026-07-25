@@ -162,6 +162,7 @@ pub mod upgrade_no_schema_version;
 mod cfg;
 mod provenance;
 mod util;
+pub mod callgraph;
 pub mod vec_get_unwrap;
 pub mod vec_map_tuple_convert;
 pub mod vec_mutate_in_loop;
@@ -352,6 +353,7 @@ pub use invoke_nonexistent_func::InvokeNonexistentFuncCheck;
 pub use unintended_public_method::UnintendedPublicMethodCheck;
 
 pub use invalid_address_literal::InvalidAddressLiteralCheck;
+pub use callgraph::CallGraph;
 
 use serde::Serialize;
 use syn::File;

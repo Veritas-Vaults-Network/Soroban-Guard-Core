@@ -2,6 +2,41 @@
 
 This document describes what each Soroban Guard Core check looks for and why it matters.
 
+## Analysis infrastructure
+
+### Call graph (interprocedural analysis)
+
+The analyzer builds a file-local **call graph** — a map of which functions call which other functions — to enable checks to see control flow across procedure boundaries. This is essential for detecting issues hidden in private helper functions.
+
+**What it resolves**
+
+The call graph recognizes two categories of calls in the AST:
+
+1. **Direct function calls:** `helper_name()` and `Self::helper_name()` — resolved by matching the path's final segment to known function names in the file.
+2. **Self-method calls:** `self.method_name()` — resolved when the receiver is explicitly `self`.
+
+**What it does NOT resolve**
+
+- **Trait object calls** (`self.trait_method()` through `dyn Trait`) — no type information in the AST.
+- **Generic calls** (`T::generic_fn()`) — would require type substitution.
+- **Calls through field variables** (`self.field.method()` where `field` is some type) — requires type resolution.
+- **External crate calls** — only functions defined in this file are included in the registry.
+
+Checks that traverse the call graph must be aware of these limitations and document any patterns they intentionally do not resolve.
+
+**BFS/DFS and loop safety**
+
+The `CallGraph::reachable_from(start)` method uses breadth-first search to compute all functions transitively reachable from a starting function, including the start itself. It guards against infinite loops in recursive or mutually-recursive functions by tracking visited nodes — so even a function that calls itself or participates in a call cycle will not cause the traversal to hang.
+
+**Future interprocedural checks**
+
+The call graph enables future checks to detect:
+
+- Auth hidden in helpers (e.g., `pub fn withdraw() { do_withdraw(env) }` where `do_withdraw(env: Env)` calls `env.require_auth()`).
+- Double-initialization across multiple functions (e.g., `initialize()` and `reinitialize()`).
+- Time-of-check-time-of-use (TOCTOU) races that span helper boundaries.
+- Initialization order issues (e.g., `upgrade()` calls `initialize()` in the wrong order).
+
 ---
 
 ## `missing-require-auth` (High)
@@ -22,7 +57,7 @@ Contract state updates should be gated. This rule only recognizes `env.require_a
 **Limitations**
 
 - Only the `Env` binding named `env` counts.
-- Static analysis cannot see auth hidden in helpers.
+- Static analysis cannot see auth hidden in helpers — the analyzer only looks at the function body itself, not helper functions it calls. The call graph infrastructure exists to enable a future enhanced version of this check that traverses helper call chains; see the [call graph](#call-graph-interprocedural-analysis) section.
 
 **Fixture:** `test-contracts/vulnerable/`, `test-contracts/safe/`
 
