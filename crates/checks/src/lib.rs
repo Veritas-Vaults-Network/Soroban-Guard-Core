@@ -56,6 +56,7 @@ pub mod event_topic_runtime_string;
 pub mod expect_leaks;
 pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
+pub mod governance_threshold_drift;
 pub mod hash_as_storage_key;
 pub mod host_result_ignored;
 pub mod i128_to_u64;
@@ -233,6 +234,7 @@ pub use event_topic_runtime_string::EventTopicRuntimeStringCheck;
 pub use expect_leaks::ExpectLeaksCheck;
 pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
+pub use governance_threshold_drift::GovernanceThresholdDriftCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
 pub use host_result_ignored::HostResultIgnoredCheck;
 pub use i128_to_u64::I128ToU64Check;
@@ -413,6 +415,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(TempGetNoHasCheck),
         Box::new(AmountMulOverflowCheck),
         Box::new(FloatArithmeticCheck),
+        Box::new(GovernanceThresholdDriftCheck),
         Box::new(Sha256EmptyCheck),
         Box::new(Ed25519KeyInTempCheck),
         Box::new(WeakRandomnessCheck),
