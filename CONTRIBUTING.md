@@ -107,6 +107,32 @@ impl<'ast> Visit<'ast> for StorageCallCount {
 
 Drive the visitor with `visit::visit_file(&mut v, &file)` or `v.visit_block(&func.block)` for a single function body.
 
+### Interprocedural analysis with the call graph
+
+For checks that need to see across function boundaries (e.g., detecting auth hidden in a helper), use [`CallGraph`](crates/checks/src/callgraph.rs):
+
+```rust
+use crate::CallGraph;
+
+impl Check for MyCheck {
+    fn run(&self, file: &File, _source: &str) -> Vec<Finding> {
+        let graph = CallGraph::build(file);
+        for method in contractimpl_functions(file) {
+            let reachable = graph.reachable_from(&method.sig.ident.to_string());
+            // Now check all functions reachable from this method
+            for func_name in &reachable {
+                // Analyze func_name, which may be a helper called directly or indirectly
+            }
+        }
+        // ...
+    }
+}
+```
+
+`CallGraph::build()` collects all functions in the file (free `fn` items and methods in any `impl` block). `CallGraph::reachable_from(start)` returns all functions transitively reachable from `start` via calls it makes, guarding against infinite loops in recursive functions.
+
+**Limitations:** The call graph only resolves direct function calls (`foo()`, `Self::foo()`) and self-method calls (`self.method()`). It does not handle trait objects, generics, or calls through field variables. For details, see [`docs/checks.md`](docs/checks.md#call-graph-interprocedural-analysis).
+
 ### Further reading
 
 - [`syn` on docs.rs](https://docs.rs/syn/)
