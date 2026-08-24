@@ -30,6 +30,7 @@ pub mod catch_unwind;
 pub mod contracterror_attr;
 pub mod contracttype;
 pub mod debug_entrypoint;
+pub mod deploy_address_lost;
 pub mod deploy_arg_auth;
 pub mod deploy_salt_predictable;
 pub mod deploy_unverified;
@@ -143,6 +144,7 @@ pub use catch_unwind::CatchUnwindCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use debug_entrypoint::DebugEntrypointCheck;
+pub use deploy_address_lost::DeployAddressLostCheck;
 pub use deploy_arg_auth::DeployArgAuthCheck;
 pub use deploy_salt_predictable::DeploySaltPredictableCheck;
 pub use deploy_unverified::DeployUnverifiedCheck;
@@ -306,6 +308,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AuthorizeAsContractCheck),
         Box::new(AuthorizeEmptyCheck),
         Box::new(AddressCmpInsteadOfAuthCheck),
+        Box::new(DeployAddressLostCheck),
         Box::new(DeployArgAuthCheck),
         Box::new(DeployerReuseCheck),
         Box::new(DoubleInitCheck),
