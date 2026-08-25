@@ -137,12 +137,12 @@ enum LoopEvent {
 /// Returns the set of iterable names for which the function uses the safe
 /// two-pass idiom: at least one loop with NO mutations (validation-only) AND
 /// at least one loop WITH mutations, both iterating the same variable.
-fn detect_two_pass_iterables<'a>(loops: &'a [LoopInfo]) -> HashSet<&'a str> {
+fn detect_two_pass_iterables(loops: &[LoopInfo]) -> HashSet<&str> {
     let mut by_iter: HashMap<&str, (bool, bool)> = HashMap::new();
     // (has_pure_validation_loop, has_mutation_loop)
     for lp in loops {
         if let Some(ref name) = lp.iter_name {
-            let has_write = lp.events.iter().any(|e| *e == LoopEvent::StorageWrite);
+            let has_write = lp.events.contains(&LoopEvent::StorageWrite);
             let entry = by_iter.entry(name.as_str()).or_insert((false, false));
             if !has_write {
                 entry.0 = true; // pure-validation loop
@@ -224,10 +224,10 @@ struct LoopBodyScanner {
 impl<'ast> Visit<'ast> for LoopBodyScanner {
     fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
         let method = i.method.to_string();
-        if matches!(method.as_str(), "set" | "remove" | "push_back" | "insert") {
-            if receiver_chain_has_storage(&i.receiver) {
-                self.events.push(LoopEvent::StorageWrite);
-            }
+        if matches!(method.as_str(), "set" | "remove" | "push_back" | "insert")
+            && receiver_chain_has_storage(&i.receiver)
+        {
+            self.events.push(LoopEvent::StorageWrite);
         }
         visit::visit_expr_method_call(self, i);
     }

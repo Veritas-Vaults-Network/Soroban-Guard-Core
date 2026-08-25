@@ -172,11 +172,7 @@ impl Check for RevokedAdminReuseCheck {
 
 fn type_contains_address(ty: &syn::Type) -> bool {
     match ty {
-        syn::Type::Path(tp) => tp
-            .path
-            .segments
-            .iter()
-            .any(|seg| seg.ident == "Address"),
+        syn::Type::Path(tp) => tp.path.segments.iter().any(|seg| seg.ident == "Address"),
         syn::Type::Reference(r) => type_contains_address(&r.elem),
         _ => false,
     }
@@ -281,8 +277,7 @@ impl<'a> MembershipCheckScan<'a> {
     /// revocation-keyword identifier AND a membership-check method name appear
     /// anywhere in the token text — a conservative but effective heuristic.
     fn macro_tokens_have_check(&self, tokens: &str) -> bool {
-        let has_membership_method = tokens.contains("contains")
-            || tokens.contains("has");
+        let has_membership_method = tokens.contains("contains") || tokens.contains("has");
 
         if !has_membership_method {
             return false;
@@ -310,11 +305,7 @@ impl<'ast, 'a> Visit<'ast> for MembershipCheckScan<'a> {
                 for arg in &i.args {
                     ident_scan.visit_expr(arg);
                 }
-                if ident_scan
-                    .names
-                    .iter()
-                    .any(|n| self.ident_matches_any(n))
-                {
+                if ident_scan.names.iter().any(|n| self.ident_matches_any(n)) {
                     self.found_check = true;
                 }
             }
@@ -506,7 +497,10 @@ impl C {
 "#,
         )?;
         let hits = RevokedAdminReuseCheck.run(&file, "");
-        assert!(hits.is_empty(), "expected no findings when check is present");
+        assert!(
+            hits.is_empty(),
+            "expected no findings when check is present"
+        );
         Ok(())
     }
 

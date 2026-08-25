@@ -96,16 +96,14 @@ impl FunctionMap {
                 Item::Fn(item_fn) => {
                     let name = item_fn.sig.ident.to_string();
                     let params = collect_params(&item_fn.sig);
-                    m.functions
-                        .insert(name, (params, *item_fn.block.clone()));
+                    m.functions.insert(name, (params, *item_fn.block.clone()));
                 }
                 Item::Impl(item_impl) => {
                     for impl_item in &item_impl.items {
                         if let syn::ImplItem::Fn(method) = impl_item {
                             let name = method.sig.ident.to_string();
                             let params = collect_params(&method.sig);
-                            m.functions
-                                .insert(name, (params, method.block.clone()));
+                            m.functions.insert(name, (params, method.block.clone()));
                         }
                     }
                 }
@@ -225,9 +223,7 @@ fn expr_has_min_or_clamp(expr: &Expr) -> bool {
             let name = m.method.to_string();
             name == "min" || name == "clamp" || expr_has_min_or_clamp(&m.receiver)
         }
-        Expr::Binary(b) => {
-            expr_has_min_or_clamp(&b.left) || expr_has_min_or_clamp(&b.right)
-        }
+        Expr::Binary(b) => expr_has_min_or_clamp(&b.left) || expr_has_min_or_clamp(&b.right),
         _ => false,
     }
 }
@@ -281,8 +277,7 @@ fn foo() {
 
     #[test]
     fn traces_parameter() {
-        let (bindings, params) =
-            mk_binding_map("fn foo(ttl: u32) { let x = ttl; }");
+        let (bindings, params) = mk_binding_map("fn foo(ttl: u32) { let x = ttl; }");
         let fmap = FunctionMap::default();
         let expr: Expr = syn::parse_str("x").unwrap();
         let origin = trace_origin(&expr, &params, &bindings, &fmap, &HashMap::new(), MAX_HOPS);
@@ -291,8 +286,7 @@ fn foo() {
 
     #[test]
     fn traces_clamped_binding() {
-        let (bindings, params) =
-            mk_binding_map("fn foo(ttl: u32) { let capped = ttl.min(1000); }");
+        let (bindings, params) = mk_binding_map("fn foo(ttl: u32) { let capped = ttl.min(1000); }");
         let fmap = FunctionMap::default();
         let expr: Expr = syn::parse_str("capped").unwrap();
         let origin = trace_origin(&expr, &params, &bindings, &fmap, &HashMap::new(), MAX_HOPS);

@@ -53,10 +53,8 @@ impl Check for GovernanceThresholdDriftCheck {
 
         let mut out = Vec::new();
         for (counter, counter_sites) in &by_counter {
-            let mut thresholds: Vec<&str> = counter_sites
-                .iter()
-                .map(|s| s.threshold.as_str())
-                .collect();
+            let mut thresholds: Vec<&str> =
+                counter_sites.iter().map(|s| s.threshold.as_str()).collect();
             thresholds.sort();
             thresholds.dedup();
             if thresholds.len() < 2 {
@@ -198,9 +196,7 @@ fn extract_threshold_value(expr: &Expr, consts: &HashMap<String, String>) -> Opt
 
 fn expr_path_ident(expr: &Expr) -> Option<String> {
     match expr {
-        Expr::Path(p) if p.path.segments.len() == 1 => {
-            Some(p.path.segments[0].ident.to_string())
-        }
+        Expr::Path(p) if p.path.segments.len() == 1 => Some(p.path.segments[0].ident.to_string()),
         _ => None,
     }
 }
@@ -268,8 +264,7 @@ mod tests {
 
     #[test]
     fn flags_different_thresholds_in_propose_and_execute() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Address};
 
 pub struct C;
@@ -292,8 +287,7 @@ impl C {
         }
     }
 }
-"#,
-        )?;
+"#)?;
         assert_eq!(hits.len(), 2);
         assert!(hits.iter().all(|h| h.check_name == CHECK_NAME));
         assert!(hits.iter().all(|h| h.severity == Severity::High));
@@ -304,8 +298,7 @@ impl C {
 
     #[test]
     fn passes_when_same_named_const_used() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Address};
 
 const QUORUM: u32 = 3;
@@ -330,16 +323,14 @@ impl C {
         }
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn passes_when_same_literal_used() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Address};
 
 pub struct C;
@@ -362,16 +353,14 @@ impl C {
         }
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn ignores_non_governance_functions() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Address};
 
 pub struct C;
@@ -394,16 +383,14 @@ impl C {
         }
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn flags_three_functions_with_mixed_thresholds() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Address};
 
 pub struct C;
@@ -434,8 +421,7 @@ impl C {
         }
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(!hits.is_empty());
         assert!(hits.iter().any(|h| h.function_name == "execute"));
         Ok(())
