@@ -119,8 +119,8 @@ fn collect_ops_visitor(
 
         fn visit_expr_call(&mut self, i: &'ast syn::ExprCall) {
             if let Expr::Path(p) = &*i.func {
-                if let Some(ident) = p.path.get_ident() {
-                    let callee = ident.to_string();
+                if let Some(segment) = p.path.segments.last() {
+                    let callee = segment.ident.to_string();
                     for item in self.impl_items {
                         if let ImplItem::Fn(m) = item {
                             if m.sig.ident == callee {
