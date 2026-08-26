@@ -58,11 +58,9 @@ impl Check for UpgradeAtomicityOrderCheck {
             let write_markers = graph.markers_with_tag(TAG_VERSION_WRITE);
 
             for (u_block, u_marker) in &upgrade_markers {
-                let dominated = write_markers
-                    .iter()
-                    .any(|(w_block, w_marker)| {
-                        graph.marker_dominates(*w_block, *w_marker, *u_block, *u_marker)
-                    });
+                let dominated = write_markers.iter().any(|(w_block, w_marker)| {
+                    graph.marker_dominates(*w_block, *w_marker, *u_block, *u_marker)
+                });
                 if !dominated {
                     out.push(Finding {
                         check_name: CHECK_NAME.to_string(),
@@ -159,8 +157,7 @@ mod tests {
 
     #[test]
     fn passes_when_write_unconditionally_precedes_upgrade() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -175,15 +172,13 @@ impl C {
         env.deployer().update_current_contract_wasm(wasm_hash);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn flags_write_inside_if_branch_that_skips_to_upgrade() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, Address, BytesN, Env};
 
 #[contract]
@@ -200,8 +195,7 @@ impl C {
         env.deployer().update_current_contract_wasm(wasm_hash);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].check_name, CHECK_NAME);
         assert_eq!(hits[0].severity, Severity::High);
@@ -210,8 +204,7 @@ impl C {
 
     #[test]
     fn flags_write_after_the_upgrade_call() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -226,15 +219,13 @@ impl C {
         env.storage().instance().set(&SCHEMA_VERSION, &2u32);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
     }
 
     #[test]
     fn passes_when_write_precedes_upgrade_in_every_branch() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -253,15 +244,13 @@ impl C {
         }
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn flags_when_upgrade_reachable_without_write_via_a_helper() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -282,16 +271,14 @@ impl C {
         }
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].function_name, "upgrade");
     }
 
     #[test]
     fn passes_when_helper_unconditionally_writes_before_upgrade() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -310,15 +297,13 @@ impl C {
         env.storage().instance().set(&SCHEMA_VERSION, &2u32);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn no_findings_when_no_upgrade_call() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, Env};
 
 #[contract]
@@ -330,15 +315,13 @@ impl C {
         env.storage().instance().set(&42u32, &0u32);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn flags_when_write_only_reachable_via_a_different_branch_than_upgrade() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contract, contractimpl, symbol_short, BytesN, Env};
 
 #[contract]
@@ -356,8 +339,7 @@ impl C {
         }
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
     }
 }

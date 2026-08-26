@@ -8,7 +8,7 @@ use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprMethodCall, File, Macro, Stmt};
+use syn::{Expr, File, Stmt};
 
 const CHECK_NAME: &str = "balance-not-verified-after-transfer";
 
@@ -54,7 +54,7 @@ impl<'ast> Visit<'ast> for TransferVisitor<'ast> {
             if m.method == "transfer" && receiver_is_not_bare_env(&m.receiver) {
                 // Check if there's a balance verification after this transfer
                 let has_balance_check = self.has_balance_verification_after(i);
-                
+
                 if !has_balance_check {
                     self.out.push(Finding {
                         check_name: CHECK_NAME.to_string(),
@@ -87,7 +87,7 @@ impl TransferVisitor<'_> {
         // 2. Look at subsequent statements in the same block
         // 3. Check for balance() calls, assert!/require! macros with balance checks
         // 4. Handle control flow (if/else, loops, etc.)
-        
+
         // Returning false means we flag all transfers as vulnerable
         // This is conservative - users can suppress false positives
         false

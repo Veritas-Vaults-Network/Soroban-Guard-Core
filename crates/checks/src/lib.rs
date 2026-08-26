@@ -34,6 +34,7 @@ pub mod burn_no_event;
 pub mod bytes_not_bytesn;
 pub mod bytes_oversized;
 pub mod catch_unwind;
+mod cfg;
 pub mod contracterror_attr;
 pub mod contracttype;
 pub mod cross_token_provenance_mix;

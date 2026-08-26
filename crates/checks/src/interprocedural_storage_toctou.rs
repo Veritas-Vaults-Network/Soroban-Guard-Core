@@ -92,24 +92,24 @@ fn collect_ops_visitor(
         fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
             let method_name = i.method.to_string();
 
-            if method_name_is_storage_read(&method_name) || method_name_is_storage_write(&method_name)
+            if (method_name_is_storage_read(&method_name)
+                || method_name_is_storage_write(&method_name))
+                && receiver_chain_contains_storage(&i.receiver)
             {
-                if receiver_chain_contains_storage(&i.receiver) {
-                    if let Some(tier) = get_storage_tier(i) {
-                        if let Some(arg) = i.args.first() {
-                            let kind = if method_name_is_storage_read(&method_name) {
-                                OpKind::Read
-                            } else {
-                                OpKind::Write
-                            };
-                            self.ops.push(StorageOp {
-                                kind,
-                                key_tokens: expr_to_string(arg),
-                                tier,
-                                line: i.span().start().line,
-                                function_name: self.current_fn.to_string(),
-                            });
-                        }
+                if let Some(tier) = get_storage_tier(i) {
+                    if let Some(arg) = i.args.first() {
+                        let kind = if method_name_is_storage_read(&method_name) {
+                            OpKind::Read
+                        } else {
+                            OpKind::Write
+                        };
+                        self.ops.push(StorageOp {
+                            kind,
+                            key_tokens: expr_to_string(arg),
+                            tier,
+                            line: i.span().start().line,
+                            function_name: self.current_fn.to_string(),
+                        });
                     }
                 }
             }
@@ -118,20 +118,34 @@ fn collect_ops_visitor(
         }
 
         fn visit_expr_call(&mut self, i: &'ast syn::ExprCall) {
-            if let Expr::Path(p) = &*i.func {
-                if let Some(segment) = p.path.segments.last() {
-                    let callee = segment.ident.to_string();
-                    for item in self.impl_items {
-                        if let ImplItem::Fn(m) = item {
-                            if m.sig.ident == callee {
-                                let mut inner = Inner {
-                                    current_fn: &callee,
-                                    impl_items: self.impl_items,
-                                    ops: &mut *self.ops,
-                                };
-                                inner.visit_block(&m.block);
-                                return;
-                            }
+            // Resolve the callee name: plain `foo(...)` or `Self::foo(...)`
+            let callee = if let Expr::Path(p) = &*i.func {
+                if let Some(ident) = p.path.get_ident() {
+                    // bare call: foo(...)
+                    Some(ident.to_string())
+                } else {
+                    // two-segment Self::foo(...) path
+                    let segs = &p.path.segments;
+                    if segs.len() == 2 && segs[0].ident == "Self" {
+                        Some(segs[1].ident.to_string())
+                    } else {
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+            if let Some(callee) = callee {
+                for item in self.impl_items {
+                    if let ImplItem::Fn(m) = item {
+                        if m.sig.ident == callee {
+                            let mut inner = Inner {
+                                current_fn: &callee,
+                                impl_items: self.impl_items,
+                                ops: &mut *self.ops,
+                            };
+                            inner.visit_block(&m.block);
+                            return;
                         }
                     }
                 }
@@ -176,7 +190,7 @@ impl Check for InterproceduralStorageTocTouCheck {
         for impl_block in &contractimpl_blocks {
             for entrypoint in contractimpl_functions(file) {
                 let fn_name = entrypoint.sig.ident.to_string();
-                let mut reachable_ops =
+                let reachable_ops =
                     collect_ops_in_block(&entrypoint.block, &fn_name, &impl_block.items);
 
                 let mut own_function_names: Vec<String> = Vec::new();

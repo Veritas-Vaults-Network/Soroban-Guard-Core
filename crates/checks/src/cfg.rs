@@ -266,9 +266,8 @@ impl<'a> Builder<'a> {
             Some((_, else_expr)) => {
                 let else_entry = self.new_block();
                 self.add_edge(from, else_entry);
-                match self.build_expr_stmt(else_entry, else_expr) {
-                    Some(Some(exit)) => self.add_edge(exit, join),
-                    Some(None) | None => {}
+                if let Some(Some(exit)) = self.build_expr_stmt(else_entry, else_expr) {
+                    self.add_edge(exit, join);
                 }
             }
             None => {
@@ -283,9 +282,8 @@ impl<'a> Builder<'a> {
         for arm in &e.arms {
             let arm_entry = self.new_block();
             self.add_edge(from, arm_entry);
-            match self.build_expr_stmt(arm_entry, &arm.body) {
-                Some(Some(exit)) => self.add_edge(exit, join),
-                Some(None) | None => {}
+            if let Some(Some(exit)) = self.build_expr_stmt(arm_entry, &arm.body) {
+                self.add_edge(exit, join);
             }
         }
     }
@@ -522,7 +520,13 @@ impl Cfg {
 
     /// Does marker `a` dominate marker `b` on every path (with `a` occurring
     /// strictly first when they share a block)?
-    pub fn marker_dominates(&self, a_block: BlockId, a: Marker, b_block: BlockId, b: Marker) -> bool {
+    pub fn marker_dominates(
+        &self,
+        a_block: BlockId,
+        a: Marker,
+        b_block: BlockId,
+        b: Marker,
+    ) -> bool {
         if a_block == b_block {
             return a.order < b.order;
         }
