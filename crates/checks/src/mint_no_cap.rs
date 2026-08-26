@@ -61,10 +61,8 @@ impl<'ast> Visit<'ast> for MintScan {
     fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
         if receiver_chain_contains_storage(&i.receiver) {
             match i.method.to_string().as_str() {
-                "get" | "get_unchecked" => {
-                    if i.args.iter().any(expr_contains_supply_hint) {
-                        self.supply_get = true;
-                    }
+                "get" | "get_unchecked" if i.args.iter().any(expr_contains_supply_hint) => {
+                    self.supply_get = true;
                 }
                 "set" => {
                     self.storage_write = true;

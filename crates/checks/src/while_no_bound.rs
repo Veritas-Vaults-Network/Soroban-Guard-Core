@@ -85,7 +85,9 @@ impl WhileVisitor<'_> {
         if cond_str.contains("storage") || receiver_chain_contains_storage(cond) {
             return true;
         }
-        self.params.iter().any(|param| ident_in_tokens(&cond_str, param))
+        self.params
+            .iter()
+            .any(|param| ident_in_tokens(&cond_str, param))
     }
 }
 

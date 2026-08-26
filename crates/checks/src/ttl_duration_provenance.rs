@@ -128,8 +128,7 @@ mod tests {
 
     #[test]
     fn flags_extend_ttl_with_uncapped_param() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -139,8 +138,7 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, requested_ttl);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].severity, Severity::High);
         assert_eq!(hits[0].check_name, CHECK_NAME);
@@ -149,8 +147,7 @@ impl C {
 
     #[test]
     fn passes_when_duration_literal() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -160,15 +157,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, 200);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn passes_when_param_is_clamped_with_min() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -179,15 +174,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, capped);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty(), "clamped param should pass: {hits:?}");
     }
 
     #[test]
     fn passes_when_param_is_clamped_with_clamp() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -198,15 +191,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, capped);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty(), "clamped param should pass: {hits:?}");
     }
 
     #[test]
     fn passes_when_param_min_inline() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -216,15 +207,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, requested_ttl.min(10000));
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty(), "inline .min() should pass: {hits:?}");
     }
 
     #[test]
     fn flags_indirect_through_binding() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 #[contractimpl]
@@ -235,16 +224,14 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, dur);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1, "indirect binding to param should flag");
         assert!(hits[0].description.contains("requested_ttl"));
     }
 
     #[test]
     fn passes_through_helper_returning_literal() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 fn safe_ttl() -> u32 { 500 }
@@ -256,15 +243,16 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, dur);
     }
 }
-"#,
+"#);
+        assert!(
+            hits.is_empty(),
+            "helper returning literal should pass: {hits:?}"
         );
-        assert!(hits.is_empty(), "helper returning literal should pass: {hits:?}");
     }
 
     #[test]
     fn flags_through_helper_returning_param() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env, Symbol};
 pub struct C;
 fn forward(ttl: u32) -> u32 { ttl }
@@ -276,15 +264,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, dur);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1, "helper returning param should flag");
     }
 
     #[test]
     fn ignores_non_contractimpl() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{Env, Symbol};
 pub struct C;
 impl C {
@@ -293,15 +279,13 @@ impl C {
         env.storage().persistent().extend_ttl(&key, 100, requested_ttl);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn passes_instance_extend_ttl_with_literal() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env};
 pub struct C;
 #[contractimpl]
@@ -310,15 +294,13 @@ impl C {
         env.storage().instance().extend_ttl(100, 200);
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn flags_instance_extend_ttl_with_param() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Env};
 pub struct C;
 #[contractimpl]
@@ -327,8 +309,7 @@ impl C {
         env.storage().instance().extend_ttl(100, ttl);
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
     }
 }
