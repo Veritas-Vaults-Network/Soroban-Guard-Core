@@ -1,8 +1,9 @@
 //! Unauthorised storage remove: `env.storage()…remove(key)` where `key` is derived
 //! from an `Address`-typed parameter and no `<param>.require_auth()` precedes it.
 
-use crate::util::contractimpl_functions;
+use crate::util::{binding_ident, contractimpl_functions};
 use crate::{Check, Finding, Severity};
+use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 use syn::{Expr, ExprMethodCall, File, FnArg, Pat, Stmt, Type};
@@ -31,12 +32,14 @@ impl Check for UnauthStorageRemoveCheck {
             }
 
             let stmts = &method.block.stmts;
+            let aliases = local_aliases(stmts);
 
             for (idx, stmt) in stmts.iter().enumerate() {
                 // Find a storage remove call in this statement.
                 let Some((remove_line, key_idents)) = storage_remove_info(stmt) else {
                     continue;
                 };
+                let key_idents = resolve_aliases(&key_idents, &aliases);
 
                 // Check if any key ident is an Address param.
                 let addr_param = addr_params
@@ -47,9 +50,9 @@ impl Check for UnauthStorageRemoveCheck {
                 };
 
                 // Check whether require_auth on this param (or env) precedes this stmt.
-                let guarded = stmts[..idx].iter().any(|s| {
-                    stmt_has_require_auth(s, addr_param) || stmt_has_env_require_auth(s)
-                });
+                let guarded = stmts[..idx]
+                    .iter()
+                    .any(|s| stmt_has_require_auth(s, addr_param) || stmt_has_env_require_auth(s));
 
                 if !guarded {
                     out.push(Finding {
@@ -78,9 +81,7 @@ impl Check for UnauthStorageRemoveCheck {
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 /// Collect names of parameters whose type is `Address` (or `soroban_sdk::Address`).
-fn address_params(
-    inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>,
-) -> Vec<String> {
+fn address_params(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>) -> Vec<String> {
     inputs
         .iter()
         .filter_map(|arg| {
@@ -106,6 +107,39 @@ fn is_address_type(ty: &Type) -> bool {
             .is_some_and(|s| s.ident == "Address"),
         _ => false,
     }
+}
+
+/// Map each `let x = <expr>;` binding to the identifiers its initializer references, so
+/// a key built up in a local (`let key = (sym, owner, spender);`) still resolves back to
+/// the Address parameters it was made from.
+fn local_aliases(stmts: &[Stmt]) -> HashMap<String, Vec<String>> {
+    let mut map = HashMap::new();
+    for stmt in stmts {
+        let Stmt::Local(local) = stmt else { continue };
+        let Some(init) = &local.init else { continue };
+        if let Some(name) = binding_ident(&local.pat) {
+            map.insert(name, collect_idents_from_expr(&init.expr));
+        }
+    }
+    map
+}
+
+/// Expand alias identifiers into the identifiers they were built from.
+fn resolve_aliases(idents: &[String], aliases: &HashMap<String, Vec<String>>) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut queue: Vec<String> = idents.to_vec();
+    let mut seen: Vec<String> = Vec::new();
+    while let Some(ident) = queue.pop() {
+        if seen.contains(&ident) {
+            continue;
+        }
+        seen.push(ident.clone());
+        if let Some(expanded) = aliases.get(&ident) {
+            queue.extend(expanded.iter().cloned());
+        }
+        out.push(ident);
+    }
+    out
 }
 
 /// If `stmt` contains a `storage()…remove(key)` call, return

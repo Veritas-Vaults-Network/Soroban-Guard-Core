@@ -58,7 +58,9 @@ impl Check for CrossTokenProvenanceMixCheck {
 /// something else entirely (`from_currency`, `sell`, ...), but a looser heuristic
 /// (any two `Address` params) produces far too many false positives, since most
 /// contract methods take multiple unrelated addresses (caller, recipient, admin...).
-fn address_asset_params(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>) -> Vec<String> {
+fn address_asset_params(
+    inputs: &syn::punctuated::Punctuated<FnArg, syn::token::Comma>,
+) -> Vec<String> {
     let mut names = Vec::new();
     for arg in inputs {
         let FnArg::Typed(pt) = arg else { continue };
@@ -67,7 +69,9 @@ fn address_asset_params(inputs: &syn::punctuated::Punctuated<FnArg, syn::token::
         }
         if let Pat::Ident(pi) = &*pt.pat {
             let name = pi.ident.to_string();
-            if name.to_ascii_lowercase().contains("token") || name.to_ascii_lowercase().contains("asset") {
+            if name.to_ascii_lowercase().contains("token")
+                || name.to_ascii_lowercase().contains("asset")
+            {
                 names.push(name);
             }
         }
@@ -126,7 +130,10 @@ fn match_asset_for_numeric(numeric_name: &str, asset_params: &[String]) -> Optio
         }
     }
     for asset in asset_params {
-        if numeric_name.to_ascii_lowercase().contains(&asset.to_ascii_lowercase()) {
+        if numeric_name
+            .to_ascii_lowercase()
+            .contains(&asset.to_ascii_lowercase())
+        {
             return Some(asset.clone());
         }
     }
@@ -213,10 +220,8 @@ impl<'ast> Visit<'ast> for Scanner<'_> {
                     }
                 }
             }
-            Expr::MethodCall(m) => {
-                if is_conversion_like(&m.method.to_string()) {
-                    self.conversion_seen = true;
-                }
+            Expr::MethodCall(m) if is_conversion_like(&m.method.to_string()) => {
+                self.conversion_seen = true;
             }
             _ => {}
         }
@@ -265,8 +270,7 @@ mod tests {
 
     #[test]
     fn flags_direct_cross_token_addition() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -278,8 +282,7 @@ impl Contract {
         total
     }
 }
-"#,
-        )?;
+"#)?;
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].check_name, CHECK_NAME);
         assert_eq!(hits[0].severity, Severity::High);
@@ -289,8 +292,7 @@ impl Contract {
 
     #[test]
     fn flags_after_rebinding_through_lets() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -304,16 +306,14 @@ impl Contract {
         total
     }
 }
-"#,
-        )?;
+"#)?;
         assert_eq!(hits.len(), 1);
         Ok(())
     }
 
     #[test]
     fn passes_when_rate_conversion_applied_first() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -330,16 +330,14 @@ impl Contract {
         total
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn ignores_arithmetic_within_the_same_asset() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -351,16 +349,14 @@ impl Contract {
         total
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn ignores_single_asset_function() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -371,16 +367,14 @@ impl Contract {
         amount_a + amount_b
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
 
     #[test]
     fn ignores_non_contractimpl() -> Result<(), syn::Error> {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{Address, Env};
 
 pub struct Contract;
@@ -390,8 +384,7 @@ impl Contract {
         amount_a + amount_b
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }
@@ -400,8 +393,7 @@ impl Contract {
     fn ignores_unrelated_multiplication() -> Result<(), syn::Error> {
         // Mul/Div across assets can be a legitimate rate computation (amount_a * price),
         // so only Add/Sub are treated as "combining" two denominations.
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, Address, Env};
 
 pub struct Contract;
@@ -412,8 +404,7 @@ impl Contract {
         amount_a * amount_b
     }
 }
-"#,
-        )?;
+"#)?;
         assert!(hits.is_empty());
         Ok(())
     }

@@ -2,9 +2,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Block, Expr, ExprMethodCall, File, Stmt};
+use syn::{Block, Expr, ExprMethodCall, File};
 
 const CHECK_NAME: &str = "remove-without-has";
 
@@ -57,7 +58,7 @@ fn extract_key_from_call(m: &ExprMethodCall) -> Option<String> {
         return None;
     }
     // Simple heuristic: convert first arg to string representation
-    Some(format!("{:?}", m.args[0]))
+    Some(m.args[0].to_token_stream().to_string())
 }
 
 struct RemoveVisitor<'a> {
@@ -96,7 +97,8 @@ impl<'a> Visit<'a> for RemoveVisitor<'a> {
             }
         }
 
-        visit::visit_block(self, i);
+        // The collector already walks nested statements; recursing here would
+        // re-examine inner blocks without the guard that encloses them.
     }
 }
 

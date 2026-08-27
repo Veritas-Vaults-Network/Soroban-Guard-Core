@@ -4,7 +4,7 @@ use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprMethodCall, File, GenericArgument, PathArguments, Type, TypePath};
+use syn::{Expr, ExprMethodCall, File, Type, TypePath};
 
 const CHECK_NAME: &str = "event-val-type";
 
@@ -51,6 +51,7 @@ fn receiver_chain_contains_events(expr: &Expr) -> bool {
     }
 }
 
+#[allow(dead_code)]
 fn is_val_or_rawval_type(ty: &Type) -> bool {
     match ty {
         Type::Path(TypePath { path, .. }) => {
@@ -78,7 +79,7 @@ impl<'ast> Visit<'ast> for EventValTypeVisitor<'ast> {
             // publish(topics, data) - we care about the data argument (second one)
             if i.args.len() >= 2 {
                 let data_arg = &i.args[1];
-                
+
                 // Try to infer the type from the expression
                 // For now, we check if it's a direct reference to a Val/RawVal variable
                 // or if it's a tuple containing Val/RawVal
