@@ -4,6 +4,7 @@
 //! A persistent entry that is never TTL-extended will expire and become inaccessible,
 //! effectively bricking the contract.
 
+use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
@@ -19,18 +20,23 @@ impl Check for PersistentNoExtendCheck {
     }
 
     fn run(&self, file: &File, _source: &str) -> Vec<Finding> {
+        // `extend_ttl` for a key often lives in a different entrypoint than the `set`,
+        // so both sides are gathered file-wide before anything is reported.
         let mut v = PersistentTtlVisitor::default();
-        v.visit_file(file);
+        for method in contractimpl_functions(file) {
+            v.current_fn = method.sig.ident.to_string();
+            v.visit_block(&method.block);
+        }
 
         let mut out = Vec::new();
-        for (key, line) in &v.set_keys {
+        for (key, line, fn_name) in &v.set_keys {
             if !v.extend_keys.contains(key) {
                 out.push(Finding {
                     check_name: CHECK_NAME.to_string(),
                     severity: Severity::Medium,
                     file_path: String::new(),
                     line: *line,
-                    function_name: String::new(),
+                    function_name: fn_name.clone(),
                     description: format!(
                         "Persistent storage key `{key}` is written via `persistent().set()` but \
                          `extend_ttl()` is never called for it. The entry will expire and become \
@@ -45,8 +51,9 @@ impl Check for PersistentNoExtendCheck {
 
 #[derive(Default)]
 struct PersistentTtlVisitor {
-    /// (key_repr, first_set_line)
-    set_keys: Vec<(String, usize)>,
+    current_fn: String,
+    /// (key_repr, first_set_line, enclosing_fn)
+    set_keys: Vec<(String, usize, String)>,
     extend_keys: Vec<String>,
 }
 
@@ -57,13 +64,17 @@ impl<'ast> Visit<'ast> for PersistentTtlVisitor {
         if method == "set" && receiver_chain_has_persistent(&i.receiver) && i.args.len() == 2 {
             if let Some(key) = key_repr(&i.args[0]) {
                 // Only record first occurrence per key
-                if !self.set_keys.iter().any(|(k, _)| k == &key) {
-                    self.set_keys.push((key, i.span().start().line));
+                if !self.set_keys.iter().any(|(k, _, _)| k == &key) {
+                    self.set_keys
+                        .push((key, i.span().start().line, self.current_fn.clone()));
                 }
             }
         }
 
-        if method == "extend_ttl" && receiver_chain_has_persistent(&i.receiver) && !i.args.is_empty() {
+        if method == "extend_ttl"
+            && receiver_chain_has_persistent(&i.receiver)
+            && !i.args.is_empty()
+        {
             if let Some(key) = key_repr(&i.args[0]) {
                 if !self.extend_keys.contains(&key) {
                     self.extend_keys.push(key);

@@ -40,7 +40,9 @@ impl Check for SupplyCapCheck {
                     check_name: CHECK_NAME.to_string(),
                     severity: Severity::High,
                     file_path: String::new(),
-                    line: scan.write_line.unwrap_or_else(|| method.sig.ident.span().start().line),
+                    line: scan
+                        .write_line
+                        .unwrap_or_else(|| method.sig.ident.span().start().line),
                     function_name: "mint".to_string(),
                     description: "Method `mint` reads a supply value from storage and writes \
                                   back an increased amount, but contains no `<=` or `<` \
@@ -69,7 +71,7 @@ impl<'ast> Visit<'ast> for BodyScan {
         if receiver_chain_contains_storage(&i.receiver) {
             match method.as_str() {
                 "get" | "get_unchecked" => {
-                    if i.args.iter().any(|a| expr_contains_supply_hint(a)) {
+                    if i.args.iter().any(expr_contains_supply_hint) {
                         self.supply_get = true;
                     }
                 }
@@ -91,6 +93,20 @@ impl<'ast> Visit<'ast> for BodyScan {
             self.cap_comparison = true;
         }
         visit::visit_expr_binary(self, i);
+    }
+
+    fn visit_macro(&mut self, i: &'ast syn::Macro) {
+        // `assert!(supply + amount <= max)` never reaches visit_expr_binary, because
+        // syn leaves macro bodies as raw tokens.
+        let is_assert = i
+            .path
+            .segments
+            .last()
+            .is_some_and(|s| s.ident.to_string().contains("assert"));
+        if is_assert && i.tokens.to_string().contains('<') {
+            self.cap_comparison = true;
+        }
+        visit::visit_macro(self, i);
     }
 }
 

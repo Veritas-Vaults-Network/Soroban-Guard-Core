@@ -419,7 +419,7 @@ impl Display for Contract {
 "#,
         )?;
         let graph = CallGraph::build(&file);
-        let reachable = graph.reachable_from("free_fn");
+        let _reachable = graph.reachable_from("free_fn");
         assert!(graph.direct_callees("free_fn").is_some());
         assert!(graph.direct_callees("public_method").is_some());
         assert!(graph.direct_callees("private_method").is_some());

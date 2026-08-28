@@ -18,30 +18,46 @@ fn wiring_test_all_checks_are_registered() {
                 mods.push(name.to_string());
             }
         } else if line.starts_with("mod ") {
-            let name = line.strip_prefix("mod ").unwrap().strip_suffix(';').unwrap();
+            let name = line
+                .strip_prefix("mod ")
+                .unwrap()
+                .strip_suffix(';')
+                .unwrap();
             if !matches!(name, "cfg" | "provenance" | "util") {
                 panic!("unexpected private mod declaration: {name}");
             }
         } else if let Some(rest) = line.strip_prefix("pub use ") {
-            if let Some((mod_name, check_name)) = rest.strip_suffix(';').and_then(|s| s.split_once("::")) {
+            if let Some((mod_name, check_name)) =
+                rest.strip_suffix(';').and_then(|s| s.split_once("::"))
+            {
                 uses.push((mod_name.to_string(), check_name.to_string()));
             }
         } else if let Some(rest) = line.strip_prefix("Box::new(") {
-            let check = rest.strip_suffix("),").or_else(|| rest.strip_suffix(')')).unwrap_or(rest).to_string();
+            let check = rest
+                .strip_suffix("),")
+                .or_else(|| rest.strip_suffix(')'))
+                .unwrap_or(rest)
+                .to_string();
             entries.push(check);
         }
     }
 
     let infrastructure = ["cfg", "provenance", "util", "callgraph"];
 
-    let check_mods: Vec<_> = mods.into_iter().filter(|m| !infrastructure.contains(&m.as_str())).collect();
-    let check_uses: Vec<_> = uses.into_iter().filter(|(m, _)| !infrastructure.contains(&m.as_str())).collect();
+    let check_mods: Vec<_> = mods
+        .into_iter()
+        .filter(|m| !infrastructure.contains(&m.as_str()))
+        .collect();
+    let check_uses: Vec<_> = uses
+        .into_iter()
+        .filter(|(m, _)| !infrastructure.contains(&m.as_str()))
+        .collect();
 
     let mut missing_uses = Vec::new();
     let mut missing_entries = Vec::new();
     let mut extra_entries = Vec::new();
 
-    let use_map: HashMap<_, _> = check_uses.into_iter().map(|(m, c)| (m, c)).collect();
+    let use_map: HashMap<_, _> = check_uses.into_iter().collect();
     let entry_set: std::collections::HashSet<_> = entries.iter().cloned().collect();
 
     for mod_name in &check_mods {

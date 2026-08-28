@@ -8,7 +8,7 @@ use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprCall, ExprMethodCall, File, Stmt};
+use syn::{Expr, ExprCall, File, Stmt};
 
 const CHECK_NAME: &str = "alloc-in-loop";
 
@@ -45,7 +45,7 @@ struct AllocScan<'a> {
 impl<'ast> Visit<'ast> for AllocScan<'_> {
     fn visit_stmt(&mut self, i: &'ast Stmt) {
         match i {
-            Stmt::Expr(Expr::ForLoop(fl), _) | Stmt::Expr(Expr::While(wl), _) => {
+            Stmt::Expr(Expr::ForLoop(_), _) | Stmt::Expr(Expr::While(_), _) => {
                 self.loop_depth += 1;
                 visit::visit_stmt(self, i);
                 self.loop_depth -= 1;
@@ -62,7 +62,7 @@ impl<'ast> Visit<'ast> for AllocScan<'_> {
     fn visit_expr_call(&mut self, i: &'ast ExprCall) {
         if self.loop_depth > 0 && is_vec_or_map_new(i) {
             let line = i.span().start().line;
-            let alloc_type = get_alloc_type(i);
+            let alloc_type = alloc_type(i).unwrap_or_else(|| "Collection".to_string());
             self.out.push(Finding {
                 check_name: CHECK_NAME.to_string(),
                 severity: Severity::Low,
@@ -81,21 +81,20 @@ impl<'ast> Visit<'ast> for AllocScan<'_> {
 }
 
 fn is_vec_or_map_new(expr: &ExprCall) -> bool {
-    if let Expr::Path(p) = &*expr.func {
-        if let Some(ident) = p.path.get_ident() {
-            return matches!(ident.to_string().as_str(), "Vec" | "Map");
-        }
-    }
-    false
+    alloc_type(expr).is_some()
 }
 
-fn get_alloc_type(expr: &ExprCall) -> &str {
-    if let Expr::Path(p) = &*expr.func {
-        if let Some(ident) = p.path.get_ident() {
-            return ident.to_string().leak();
-        }
+/// Returns `Vec` or `Map` for a `Vec::new(..)` / `Map::new(..)` call path.
+fn alloc_type(expr: &ExprCall) -> Option<String> {
+    let Expr::Path(p) = &*expr.func else {
+        return None;
+    };
+    let mut segments = p.path.segments.iter().rev();
+    if segments.next()?.ident != "new" {
+        return None;
     }
-    "Collection"
+    let ty = segments.next()?.ident.to_string();
+    matches!(ty.as_str(), "Vec" | "Map").then_some(ty)
 }
 
 #[cfg(test)]

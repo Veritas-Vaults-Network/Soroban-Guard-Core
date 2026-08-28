@@ -4,8 +4,9 @@
 //! nonce in the preimage is vulnerable to preimage attacks. An attacker can
 //! brute-force small or predictable inputs.
 
-use crate::util::contractimpl_functions;
+use crate::util::{binding_ident, contractimpl_functions};
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{Expr, ExprMethodCall, File};
@@ -26,6 +27,7 @@ impl Check for WeakCommitmentCheck {
             let fn_name = method.sig.ident.to_string();
             let mut scan = CommitmentScan {
                 fn_name,
+                compound_locals: compound_locals(&method.block),
                 out: &mut out,
             };
             scan.visit_block(&method.block);
@@ -36,12 +38,13 @@ impl Check for WeakCommitmentCheck {
 
 struct CommitmentScan<'a> {
     fn_name: String,
+    compound_locals: HashSet<String>,
     out: &'a mut Vec<Finding>,
 }
 
 impl<'ast> Visit<'ast> for CommitmentScan<'_> {
     fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
-        if is_sha256_call(i) && has_weak_argument(i) {
+        if is_sha256_call(i) && self.has_weak_argument(i) {
             let line = i.span().start().line;
             self.out.push(Finding {
                 check_name: CHECK_NAME.to_string(),
@@ -74,13 +77,54 @@ fn is_sha256_call(m: &ExprMethodCall) -> bool {
     false
 }
 
-fn has_weak_argument(m: &ExprMethodCall) -> bool {
-    // Flag if argument is a simple Path or Literal (not a compound expression)
-    if m.args.len() != 1 {
-        return false;
+/// Locals bound to a compound expression, i.e. a preimage that already combines
+/// several values (`let combined = (data, nonce);`).
+fn compound_locals(block: &syn::Block) -> HashSet<String> {
+    let mut out = HashSet::new();
+    for stmt in &block.stmts {
+        let syn::Stmt::Local(local) = stmt else {
+            continue;
+        };
+        let Some(init) = &local.init else { continue };
+        let compound = matches!(
+            &*init.expr,
+            Expr::Tuple(_)
+                | Expr::Array(_)
+                | Expr::Binary(_)
+                | Expr::Call(_)
+                | Expr::MethodCall(_)
+                | Expr::Macro(_)
+        );
+        if compound {
+            if let Some(name) = binding_ident(&local.pat) {
+                out.insert(name);
+            }
+        }
     }
-    let arg = &m.args[0];
-    matches!(arg, Expr::Path(_) | Expr::Lit(_))
+    out
+}
+
+impl CommitmentScan<'_> {
+    /// Weak when the single preimage argument is a bare literal or a bare name that
+    /// was never combined with anything else.
+    fn has_weak_argument(&self, m: &ExprMethodCall) -> bool {
+        if m.args.len() != 1 {
+            return false;
+        }
+        self.is_weak_preimage(&m.args[0])
+    }
+
+    fn is_weak_preimage(&self, expr: &Expr) -> bool {
+        match expr {
+            Expr::Reference(r) => self.is_weak_preimage(&r.expr),
+            Expr::Lit(_) => true,
+            Expr::Path(p) => p
+                .path
+                .get_ident()
+                .is_some_and(|id| !self.compound_locals.contains(&id.to_string())),
+            _ => false,
+        }
+    }
 }
 
 #[cfg(test)]

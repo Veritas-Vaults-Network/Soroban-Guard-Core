@@ -160,6 +160,7 @@ struct KeyCollector<'a> {
     uses: HashMap<String, Vec<KeyUse>>,
 }
 
+#[allow(dead_code)]
 fn extract_tier(expr: &Expr) -> String {
     match expr {
         Expr::MethodCall(m) => {

@@ -2,9 +2,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprMethodCall, File};
+use syn::{Expr, ExprMethodCall, File, Pat};
 
 const CHECK_NAME: &str = "temp-for-persistent-data";
 
@@ -18,8 +19,11 @@ impl Check for TempForPersistentDataCheck {
     fn run(&self, file: &File, _source: &str) -> Vec<Finding> {
         let mut out = Vec::new();
         for method in contractimpl_functions(file) {
+            let mut bindings = SymbolBindings::default();
+            bindings.visit_block(&method.block);
             let mut v = TempPersistentVisitor {
                 fn_name: method.sig.ident.to_string(),
+                bindings: bindings.map,
                 out: &mut out,
             };
             v.visit_block(&method.block);
@@ -81,15 +85,56 @@ fn key_looks_like_persistent_data(key: &str) -> bool {
         || lower.contains("rate")
 }
 
+/// Maps `let k = Symbol::new(&env, "name");` bindings to the literal they hold, so a
+/// storage key referenced through a local variable still resolves to its real name.
+#[derive(Default)]
+struct SymbolBindings {
+    map: HashMap<String, String>,
+}
+
+impl Visit<'_> for SymbolBindings {
+    fn visit_local(&mut self, i: &syn::Local) {
+        if let (Pat::Ident(ident), Some(init)) = (&i.pat, &i.init) {
+            if let Some(lit) = symbol_new_literal(&init.expr) {
+                self.map.insert(ident.ident.to_string(), lit);
+            }
+        }
+        visit::visit_local(self, i);
+    }
+}
+
+/// Extracts `"name"` from `Symbol::new(&env, "name")`.
+fn symbol_new_literal(expr: &Expr) -> Option<String> {
+    let Expr::Call(call) = expr else {
+        return None;
+    };
+    let Expr::Path(path) = &*call.func else {
+        return None;
+    };
+    let mut segments = path.path.segments.iter().rev();
+    if segments.next()?.ident != "new" || segments.next()?.ident != "Symbol" {
+        return None;
+    }
+    match call.args.last()? {
+        Expr::Lit(l) => match &l.lit {
+            syn::Lit::Str(s) => Some(s.value()),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 struct TempPersistentVisitor<'a> {
     fn_name: String,
+    bindings: HashMap<String, String>,
     out: &'a mut Vec<Finding>,
 }
 
 impl Visit<'_> for TempPersistentVisitor<'_> {
     fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
         if i.method == "set" && receiver_chain_contains_temporary(&i.receiver) {
-            if let Some(key) = first_arg_str(i) {
+            if let Some(raw) = first_arg_str(i) {
+                let key = self.bindings.get(&raw).cloned().unwrap_or(raw);
                 if key_looks_like_persistent_data(&key) {
                     self.out.push(Finding {
                         check_name: CHECK_NAME.to_string(),
