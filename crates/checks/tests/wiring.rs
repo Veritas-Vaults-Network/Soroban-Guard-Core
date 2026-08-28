@@ -88,7 +88,7 @@ fn every_detector_is_fully_wired() {
     let mut entries: Vec<_> = fs::read_dir(&src_dir)
         .unwrap_or_else(|e| panic!("Cannot read {}: {}", src_dir.display(), e))
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().map_or(false, |x| x == "rs"))
+        .filter(|e| e.path().extension().is_some_and(|x| x == "rs"))
         .collect();
 
     // Sort for deterministic output

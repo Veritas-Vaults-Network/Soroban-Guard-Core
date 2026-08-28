@@ -33,3 +33,13 @@ pub fn contractimpl_functions(file: &syn::File) -> Vec<&syn::ImplItemFn> {
     }
     out
 }
+
+/// Name bound by a `let` pattern, seeing through an explicit type annotation so
+/// `let admin: Address = ..` resolves to `admin` just like `let admin = ..`.
+pub fn binding_ident(pat: &syn::Pat) -> Option<String> {
+    match pat {
+        syn::Pat::Ident(p) => Some(p.ident.to_string()),
+        syn::Pat::Type(p) => binding_ident(&p.pat),
+        _ => None,
+    }
+}

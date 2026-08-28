@@ -1,11 +1,11 @@
 //! Flags patterns where the return value of `env.invoke_contract()` is stored directly
 //! into persistent/instance/temporary storage without any intermediate validation.
 
-use crate::util::contractimpl_functions;
+use crate::util::{binding_ident, contractimpl_functions};
 use crate::{Check, Finding, Severity};
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprMethodCall, File, Pat, Stmt};
+use syn::{Expr, ExprMethodCall, File, Stmt};
 
 const CHECK_NAME: &str = "invoke-result-stored";
 
@@ -43,10 +43,10 @@ impl<'a> Visit<'a> for InvokeResultVisitor<'a> {
     fn visit_stmt(&mut self, i: &'a Stmt) {
         // Detect: let <ident> = env.invoke_contract(...)
         if let Stmt::Local(local) = i {
-            if let Pat::Ident(pat_ident) = &local.pat {
+            if let Some(name) = binding_ident(&local.pat) {
                 if let Some(init_expr) = &local.init {
                     if is_invoke_contract_call(&init_expr.expr) {
-                        self.invoke_vars.push(pat_ident.ident.to_string());
+                        self.invoke_vars.push(name);
                     }
                 }
             }

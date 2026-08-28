@@ -57,7 +57,7 @@ fn wiring_test_all_checks_are_registered() {
     let mut missing_entries = Vec::new();
     let mut extra_entries = Vec::new();
 
-    let use_map: HashMap<_, _> = check_uses.into_iter().map(|(m, c)| (m, c)).collect();
+    let use_map: HashMap<_, _> = check_uses.into_iter().collect();
     let entry_set: std::collections::HashSet<_> = entries.iter().cloned().collect();
 
     for mod_name in &check_mods {

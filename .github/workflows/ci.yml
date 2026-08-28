@@ -39,4 +39,4 @@ jobs:
         # Run in debug mode with limited parallelism to avoid OOM on smaller runners.
         # test-contracts/ is excluded from the workspace intentionally; --workspace
         # does not touch it.
-        run: cargo test --workspace -- -j 2
+        run: cargo test --workspace -- --test-threads 2

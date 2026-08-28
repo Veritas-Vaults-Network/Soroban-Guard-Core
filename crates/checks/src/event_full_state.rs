@@ -1,7 +1,8 @@
 //! Detects events publishing full storage values instead of meaningful deltas.
 
-use crate::util::contractimpl_functions;
+use crate::util::{binding_ident, contractimpl_functions};
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
 use syn::{Expr, ExprMethodCall, File};
@@ -22,6 +23,7 @@ impl Check for EventFullStateCheck {
             let fn_name = method.sig.ident.to_string();
             let mut visitor = EventPublishVisitor {
                 fn_name: fn_name.clone(),
+                storage_vars: HashSet::new(),
                 out: &mut out,
             };
             visitor.visit_block(&method.block);
@@ -32,14 +34,49 @@ impl Check for EventFullStateCheck {
 
 struct EventPublishVisitor<'a> {
     fn_name: String,
+    storage_vars: HashSet<String>,
     out: &'a mut Vec<Finding>,
 }
 
-impl<'a> Visit<'a> for EventPublishVisitor<'a> {
-    fn visit_expr_method_call(&mut self, i: &ExprMethodCall) {
+impl EventPublishVisitor<'_> {
+    /// True when `expr` is a raw storage value: a `get()` result, or a local bound
+    /// directly from one.
+    fn is_raw_storage_value(&self, expr: &Expr) -> bool {
+        if is_storage_get_result(expr) {
+            return true;
+        }
+        match expr {
+            Expr::Path(p) => p
+                .path
+                .get_ident()
+                .is_some_and(|id| self.storage_vars.contains(&id.to_string())),
+            Expr::Reference(r) => self.is_raw_storage_value(&r.expr),
+            _ => false,
+        }
+    }
+}
+
+impl<'ast> Visit<'ast> for EventPublishVisitor<'_> {
+    fn visit_local(&mut self, i: &'ast syn::Local) {
+        if let Some(init) = &i.init {
+            if is_storage_get_result(&init.expr) {
+                if let Some(name) = binding_ident(&i.pat) {
+                    self.storage_vars.insert(name);
+                }
+            }
+        }
+        visit::visit_local(self, i);
+    }
+
+    fn visit_expr_method_call(&mut self, i: &'ast ExprMethodCall) {
         if is_events_publish(i) {
-            if let Some(data_arg) = i.args.first() {
-                if is_storage_get_result(data_arg) {
+            // args[0] is the topics tuple; args[1] carries the event payload.
+            if let Some(data_arg) = i.args.get(1) {
+                let leaks = match data_arg {
+                    Expr::Tuple(t) => t.elems.iter().any(|e| self.is_raw_storage_value(e)),
+                    other => self.is_raw_storage_value(other),
+                };
+                if leaks {
                     self.out.push(Finding {
                         check_name: CHECK_NAME.to_string(),
                         severity: Severity::Low,
@@ -79,11 +116,24 @@ fn receiver_chain_contains_events(expr: &Expr) -> bool {
     }
 }
 
+/// True for `env.storage()...get(..)`, including the usual unwrapping tail
+/// (`.unwrap()`, `.unwrap_or(..)`, `.expect(..)`, `.clone()`).
 fn is_storage_get_result(expr: &Expr) -> bool {
     match expr {
         Expr::MethodCall(m) => {
             if m.method == "get" {
                 return receiver_chain_contains_storage(&m.receiver);
+            }
+            if matches!(
+                m.method.to_string().as_str(),
+                "unwrap"
+                    | "unwrap_or"
+                    | "unwrap_or_default"
+                    | "unwrap_or_else"
+                    | "expect"
+                    | "clone"
+            ) {
+                return is_storage_get_result(&m.receiver);
             }
             false
         }

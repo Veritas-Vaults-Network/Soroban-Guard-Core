@@ -2,9 +2,10 @@
 
 use crate::util::contractimpl_functions;
 use crate::{Check, Finding, Severity};
+use std::collections::HashSet;
 use syn::spanned::Spanned;
 use syn::visit::{self, Visit};
-use syn::{BinOp, Expr, ExprBinary, File, Lit};
+use syn::{BinOp, Expr, ExprBinary, File, FnArg, Lit, Member, Pat};
 
 const CHECK_NAME: &str = "address-str-eq";
 
@@ -22,6 +23,7 @@ impl Check for AddressStrEqCheck {
             let fn_name = method.sig.ident.to_string();
             let mut v = AddressStrEqVisitor {
                 fn_name: fn_name.clone(),
+                address_params: address_params(method),
                 out: &mut out,
             };
             v.visit_block(&method.block);
@@ -30,9 +32,45 @@ impl Check for AddressStrEqCheck {
     }
 }
 
+/// Names of the method's parameters declared with type `Address`.
+fn address_params(method: &syn::ImplItemFn) -> HashSet<String> {
+    let mut out = HashSet::new();
+    for arg in &method.sig.inputs {
+        let FnArg::Typed(typed) = arg else { continue };
+        let Pat::Ident(ident) = &*typed.pat else {
+            continue;
+        };
+        if let syn::Type::Path(path) = &*typed.ty {
+            if path
+                .path
+                .segments
+                .last()
+                .is_some_and(|s| s.ident == "Address")
+            {
+                out.insert(ident.ident.to_string());
+            }
+        }
+    }
+    out
+}
+
 struct AddressStrEqVisitor<'a> {
     fn_name: String,
+    address_params: HashSet<String>,
     out: &'a mut Vec<Finding>,
+}
+
+impl AddressStrEqVisitor<'_> {
+    fn is_address(&self, expr: &Expr) -> bool {
+        if let Expr::Path(p) = expr {
+            if let Some(seg) = p.path.segments.last() {
+                if self.address_params.contains(&seg.ident.to_string()) {
+                    return true;
+                }
+            }
+        }
+        is_address_like(expr)
+    }
 }
 
 impl Visit<'_> for AddressStrEqVisitor<'_> {
@@ -40,8 +78,8 @@ impl Visit<'_> for AddressStrEqVisitor<'_> {
         if matches!(i.op, BinOp::Eq(_)) {
             let left_is_str = is_str_literal(&i.left);
             let right_is_str = is_str_literal(&i.right);
-            let left_is_addr = is_address_like(&i.left);
-            let right_is_addr = is_address_like(&i.right);
+            let left_is_addr = self.is_address(&i.left);
+            let right_is_addr = self.is_address(&i.right);
 
             if (left_is_addr && right_is_str) || (left_is_str && right_is_addr) {
                 self.out.push(Finding {
@@ -50,10 +88,9 @@ impl Visit<'_> for AddressStrEqVisitor<'_> {
                     file_path: String::new(),
                     line: i.span().start().line,
                     function_name: self.fn_name.clone(),
-                    description: format!(
-                        "Expression compares an Address to a string literal with `==`. \
+                    description: "Expression compares an Address to a string literal with `==`. \
                          Use `Address::eq` or derive-compatible `PartialEq` instead."
-                    ),
+                        .to_string(),
                 });
             }
         }
@@ -71,10 +108,12 @@ fn is_address_like(expr: &Expr) -> bool {
             let name = p.path.segments.last().map(|s| s.ident.to_string());
             matches!(name.as_deref(), Some("Address") | Some("address"))
         }
-        Expr::Field(f) => {
-            let name = f.member.to_string();
-            matches!(name.as_str(), "address" | "addr")
-        }
+        Expr::Field(f) => match &f.member {
+            Member::Named(ident) => {
+                matches!(ident.to_string().as_str(), "address" | "addr")
+            }
+            Member::Unnamed(_) => false,
+        },
         _ => false,
     }
 }
