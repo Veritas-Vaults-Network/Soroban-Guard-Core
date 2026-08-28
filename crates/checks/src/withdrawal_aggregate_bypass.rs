@@ -198,7 +198,10 @@ fn references_param(expr: &syn::Expr, params: &HashSet<String>) -> bool {
             }
         }
     }
-    let mut s = ParamScanner { params, found: false };
+    let mut s = ParamScanner {
+        params,
+        found: false,
+    };
     s.visit_expr(expr);
     s.found
 }
@@ -241,7 +244,9 @@ impl<'ast> Visit<'ast> for CapDetector<'_> {
         let macro_name = i.path.segments.last().map(|s| s.ident.to_string());
         if let Some(name) = macro_name {
             if name.starts_with("assert") {
-                if let Ok(exprs) = i.parse_body_with(syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated) {
+                if let Ok(exprs) = i.parse_body_with(
+                    syn::punctuated::Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated,
+                ) {
                     if let Some(first_expr) = exprs.first() {
                         if is_comparison_with_param(first_expr, self.params) {
                             self.found_cap = true;
@@ -307,7 +312,10 @@ impl<'ast> Visit<'ast> for CallVisitor {
 
         // Check for accumulator storage access
         if receiver_chain_contains_storage(&i.receiver)
-            && matches!(method_name.as_str(), "get" | "set" | "has" | "remove" | "update" | "append")
+            && matches!(
+                method_name.as_str(),
+                "get" | "set" | "has" | "remove" | "update" | "append"
+            )
         {
             struct AccumulatorDetector {
                 found: bool,

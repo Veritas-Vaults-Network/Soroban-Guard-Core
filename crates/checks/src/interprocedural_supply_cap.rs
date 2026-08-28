@@ -275,8 +275,7 @@ mod tests {
 
     #[test]
     fn flags_second_entrypoint_with_direct_uncapped_write() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -293,8 +292,7 @@ impl C {
         env.storage().persistent().set(&symbol_short!("supply"), &(supply + amount));
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].function_name, "emergency_mint");
         assert_eq!(hits[0].severity, Severity::High);
@@ -302,8 +300,7 @@ impl C {
 
     #[test]
     fn flags_uncapped_write_reached_only_through_a_helper() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -324,16 +321,14 @@ impl C {
         env.storage().persistent().set(&symbol_short!("supply"), &(supply + amount));
     }
 }
-"#,
-        );
+"#);
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].function_name, "migrate_supply");
     }
 
     #[test]
     fn passes_when_every_entrypoint_funnels_through_a_checked_helper() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -353,15 +348,13 @@ impl C {
         env.storage().persistent().set(&symbol_short!("supply"), &(supply + amount));
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn passes_when_each_entrypoint_independently_enforces_the_cap() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -380,15 +373,13 @@ impl C {
         env.storage().persistent().set(&symbol_short!("supply"), &(supply + amount));
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn passes_when_cap_check_uses_message_carrying_assert() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -400,15 +391,13 @@ impl C {
         env.storage().persistent().set(&symbol_short!("supply"), &(supply + amount));
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 
     #[test]
     fn ignores_entrypoints_that_never_reach_a_supply_write() {
-        let hits = run(
-            r#"
+        let hits = run(r#"
 use soroban_sdk::{contractimpl, symbol_short, Address, Env};
 pub struct C;
 #[contractimpl]
@@ -417,8 +406,7 @@ impl C {
         env.storage().persistent().get(&symbol_short!("bal")).unwrap_or(0)
     }
 }
-"#,
-        );
+"#);
         assert!(hits.is_empty());
     }
 }

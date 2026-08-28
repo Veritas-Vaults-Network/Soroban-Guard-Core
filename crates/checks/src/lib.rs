@@ -12,6 +12,7 @@ pub mod admin_no_remove;
 pub mod admin_overwrite;
 pub mod admin_stored_unused;
 pub mod admin_zero_address;
+pub mod alloc_in_loop;
 pub mod allowance_clear;
 pub mod amount_mul_overflow;
 pub mod approve_race;
@@ -33,8 +34,10 @@ pub mod burn_auth;
 pub mod burn_no_event;
 pub mod bytes_not_bytesn;
 pub mod bytes_oversized;
+pub mod callgraph;
 pub mod catch_unwind;
 mod cfg;
+pub mod contract_addr_in_loop;
 pub mod contracterror_attr;
 pub mod contracttype;
 pub mod cross_token_provenance_mix;
@@ -59,6 +62,7 @@ pub mod extend_ttl_in_loop;
 pub mod float_arithmetic;
 pub mod governance_threshold_drift;
 pub mod hash_as_storage_key;
+pub mod hash_in_loop;
 pub mod host_result_ignored;
 pub mod i128_to_u64;
 pub mod instance_domain_mixing;
@@ -70,6 +74,7 @@ pub mod interprocedural_storage_toctou;
 pub mod interprocedural_supply_cap;
 pub mod invalid_address_literal;
 pub mod invoke_func_from_input;
+pub mod invoke_in_loop;
 pub mod invoke_nonexistent_func;
 pub mod invoke_result_untrusted;
 pub mod invoke_store_no_event;
@@ -107,6 +112,7 @@ pub mod panic_usage;
 pub mod partial_write_on_error;
 pub mod persistent_for_temp;
 pub mod persistent_overwrite;
+mod provenance;
 pub mod redundant_auth_args;
 pub mod reentrancy;
 pub mod renounce_no_backup;
@@ -161,10 +167,14 @@ pub mod unvalidated_price;
 pub mod upgrade_atomicity_order;
 pub mod upgrade_no_event;
 pub mod upgrade_no_schema_version;
+mod util;
 pub mod vec_get_unwrap;
+pub mod vec_iter_collect;
 pub mod vec_map_tuple_convert;
 pub mod vec_mutate_in_loop;
+pub mod vec_pop_unwrap;
 pub mod vec_push_in_loop;
+pub mod vec_slice_unchecked;
 pub mod vesting_cliff;
 pub mod weak_commitment_known;
 pub mod weak_randomness;
@@ -176,10 +186,6 @@ pub mod wrapping_balance_op;
 pub mod zero_amount;
 pub mod zero_divisor;
 pub mod zero_transfer_event;
-pub mod callgraph;
-mod cfg;
-mod provenance;
-mod util;
 
 pub use address_cmp_instead_of_auth::AddressCmpInsteadOfAuthCheck;
 pub use address_from_str::AddressFromStrCheck;
@@ -193,6 +199,7 @@ pub use admin_no_remove::AdminNoRemoveCheck;
 pub use admin_overwrite::AdminOverwriteCheck;
 pub use admin_stored_unused::AdminStoredUnusedCheck;
 pub use admin_zero_address::AdminZeroAddressCheck;
+pub use alloc_in_loop::AllocInLoopCheck;
 pub use allowance_clear::AllowanceClearCheck;
 pub use amount_mul_overflow::AmountMulOverflowCheck;
 pub use approve_race::ApproveRaceCheck;
@@ -214,7 +221,9 @@ pub use burn_auth::BurnAuthCheck;
 pub use burn_no_event::BurnNoEventCheck;
 pub use bytes_not_bytesn::BytesNotBytesNCheck;
 pub use bytes_oversized::BytesOversizedCheck;
+pub use callgraph::CallGraph;
 pub use catch_unwind::CatchUnwindCheck;
+pub use contract_addr_in_loop::ContractAddrInLoopCheck;
 pub use contracterror_attr::ContracterrorAttrCheck;
 pub use contracttype::MissingContracttypeCheck;
 pub use cross_token_provenance_mix::CrossTokenProvenanceMixCheck;
@@ -239,6 +248,7 @@ pub use extend_ttl_in_loop::ExtendTtlInLoopCheck;
 pub use float_arithmetic::FloatArithmeticCheck;
 pub use governance_threshold_drift::GovernanceThresholdDriftCheck;
 pub use hash_as_storage_key::HashAsStorageKeyCheck;
+pub use hash_in_loop::HashInLoopCheck;
 pub use host_result_ignored::HostResultIgnoredCheck;
 pub use i128_to_u64::I128ToU64Check;
 pub use instance_domain_mixing::InstanceDomainMixingCheck;
@@ -250,6 +260,7 @@ pub use interprocedural_storage_toctou::InterproceduralStorageTocTouCheck;
 pub use interprocedural_supply_cap::InterproceduralSupplyCapCheck;
 pub use invalid_address_literal::InvalidAddressLiteralCheck;
 pub use invoke_func_from_input::InvokeFuncFromInputCheck;
+pub use invoke_in_loop::InvokeInLoopCheck;
 pub use invoke_nonexistent_func::InvokeNonexistentFuncCheck;
 pub use invoke_result_untrusted::InvokeResultUntrustedCheck;
 pub use invoke_store_no_event::InvokeStoreNoEventCheck;
@@ -342,9 +353,12 @@ pub use upgrade_atomicity_order::UpgradeAtomicityOrderCheck;
 pub use upgrade_no_event::UpgradeNoEventCheck;
 pub use upgrade_no_schema_version::UpgradeNoSchemaVersionCheck;
 pub use vec_get_unwrap::VecGetUnwrapCheck;
+pub use vec_iter_collect::VecIterCollectCheck;
 pub use vec_map_tuple_convert::VecMapTupleConvertCheck;
 pub use vec_mutate_in_loop::VecMutateInLoopCheck;
+pub use vec_pop_unwrap::VecPopUnwrapCheck;
 pub use vec_push_in_loop::VecPushInLoopCheck;
+pub use vec_slice_unchecked::VecSliceUncheckedCheck;
 pub use vesting_cliff::VestingCliffCheck;
 pub use weak_commitment_known::WeakCommitmentKnownCheck;
 pub use weak_randomness::WeakRandomnessCheck;
@@ -356,7 +370,6 @@ pub use wrapping_balance_op::WrappingBalanceOpCheck;
 pub use zero_amount::ZeroAmountCheck;
 pub use zero_divisor::ZeroDivisorCheck;
 pub use zero_transfer_event::ZeroTransferEventCheck;
-pub use callgraph::CallGraph;
 
 use serde::Serialize;
 use syn::File;
@@ -406,6 +419,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(AdminOverwriteCheck),
         Box::new(AdminStoredUnusedCheck),
         Box::new(AdminZeroAddressCheck),
+        Box::new(AllocInLoopCheck),
         Box::new(AllowanceClearCheck),
         Box::new(AmountMulOverflowCheck),
         Box::new(ApproveRaceCheck),
@@ -430,6 +444,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(CatchUnwindCheck),
         Box::new(ContracterrorAttrCheck),
         Box::new(MissingContracttypeCheck),
+        Box::new(ContractAddrInLoopCheck),
         Box::new(CrossTokenProvenanceMixCheck),
         Box::new(CryptoNoCacheCheck),
         Box::new(CurrentContractUnwrapCheck),
@@ -452,6 +467,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(FloatArithmeticCheck),
         Box::new(GovernanceThresholdDriftCheck),
         Box::new(HashAsStorageKeyCheck),
+        Box::new(HashInLoopCheck),
         Box::new(HostResultIgnoredCheck),
         Box::new(I128ToU64Check),
         Box::new(InstanceDomainMixingCheck),
@@ -463,6 +479,7 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(InterproceduralSupplyCapCheck),
         Box::new(InvalidAddressLiteralCheck),
         Box::new(InvokeFuncFromInputCheck),
+        Box::new(InvokeInLoopCheck),
         Box::new(InvokeNonexistentFuncCheck),
         Box::new(InvokeResultUntrustedCheck),
         Box::new(InvokeStoreNoEventCheck),
@@ -555,9 +572,12 @@ pub fn default_checks() -> Vec<Box<dyn Check + Send + Sync>> {
         Box::new(UpgradeNoEventCheck),
         Box::new(UpgradeNoSchemaVersionCheck),
         Box::new(VecGetUnwrapCheck),
+        Box::new(VecIterCollectCheck),
         Box::new(VecMapTupleConvertCheck),
         Box::new(VecMutateInLoopCheck),
+        Box::new(VecPopUnwrapCheck),
         Box::new(VecPushInLoopCheck),
+        Box::new(VecSliceUncheckedCheck),
         Box::new(VestingCliffCheck),
         Box::new(WeakCommitmentKnownCheck),
         Box::new(WeakRandomnessCheck),

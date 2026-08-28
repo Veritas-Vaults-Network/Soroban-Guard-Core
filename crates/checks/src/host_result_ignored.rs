@@ -58,22 +58,20 @@ struct HostResultVisitor<'a> {
 impl<'a> Visit<'a> for HostResultVisitor<'a> {
     fn visit_stmt(&mut self, i: &'a Stmt) {
         match i {
-            Stmt::Expr(Expr::MethodCall(m), _) => {
-                if is_host_result_call(m) {
-                    self.out.push(Finding {
-                        check_name: CHECK_NAME.to_string(),
-                        severity: Severity::Medium,
-                        file_path: String::new(),
-                        line: m.span().start().line,
-                        function_name: self.fn_name.clone(),
-                        description: format!(
-                            "Return value of `env.{}()` is ignored. Host function calls \
-                             return `Result` and ignoring the result may hide critical \
-                             failures like storage exhaustion or event buffer overflow.",
-                            m.method
-                        ),
-                    });
-                }
+            Stmt::Expr(Expr::MethodCall(m), _) if is_host_result_call(m) => {
+                self.out.push(Finding {
+                    check_name: CHECK_NAME.to_string(),
+                    severity: Severity::Medium,
+                    file_path: String::new(),
+                    line: m.span().start().line,
+                    function_name: self.fn_name.clone(),
+                    description: format!(
+                        "Return value of `env.{}()` is ignored. Host function calls \
+                         return `Result` and ignoring the result may hide critical \
+                         failures like storage exhaustion or event buffer overflow.",
+                        m.method
+                    ),
+                });
             }
             Stmt::Local(local) => {
                 if let Pat::Wild(_) = local.pat {
