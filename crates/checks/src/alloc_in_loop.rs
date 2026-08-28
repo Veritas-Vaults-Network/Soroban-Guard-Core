@@ -80,6 +80,7 @@ impl<'ast> Visit<'ast> for AllocScan<'_> {
     }
 }
 
+/// Returns true for `Vec::new(...)` and `Map::new(...)` call expressions.
 fn is_vec_or_map_new(expr: &ExprCall) -> bool {
     alloc_type(expr).is_some()
 }
@@ -115,8 +116,7 @@ impl MyContract {
 }
         "#;
         let file = parse_file(code).unwrap();
-        let check = AllocInLoopCheck;
-        let findings = check.run(&file, code);
+        let findings = AllocInLoopCheck.run(&file, code);
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].check_name, CHECK_NAME);
         assert_eq!(findings[0].severity, Severity::Low);
@@ -137,8 +137,7 @@ impl MyContract {
 }
         "#;
         let file = parse_file(code).unwrap();
-        let check = AllocInLoopCheck;
-        let findings = check.run(&file, code);
+        let findings = AllocInLoopCheck.run(&file, code);
         assert_eq!(findings.len(), 1);
         assert_eq!(findings[0].check_name, CHECK_NAME);
     }
@@ -157,8 +156,7 @@ impl MyContract {
 }
         "#;
         let file = parse_file(code).unwrap();
-        let check = AllocInLoopCheck;
-        let findings = check.run(&file, code);
+        let findings = AllocInLoopCheck.run(&file, code);
         assert!(findings.is_empty());
     }
 }
