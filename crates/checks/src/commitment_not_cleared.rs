@@ -66,18 +66,14 @@ impl<'ast> Visit<'ast> for BodyScan {
 
         if receiver_chain_contains_storage(&i.receiver) {
             match method.as_str() {
-                "get" | "get_unchecked" => {
-                    if i.args.iter().any(expr_contains_commit_hint) {
-                        self.commitment_get = true;
-                        if self.get_line.is_none() {
-                            self.get_line = Some(i.span().start().line);
-                        }
+                "get" | "get_unchecked" if i.args.iter().any(expr_contains_commit_hint) => {
+                    self.commitment_get = true;
+                    if self.get_line.is_none() {
+                        self.get_line = Some(i.span().start().line);
                     }
                 }
-                "remove" => {
-                    if i.args.iter().any(expr_contains_commit_hint) {
-                        self.commitment_cleared = true;
-                    }
+                "remove" if i.args.iter().any(expr_contains_commit_hint) => {
+                    self.commitment_cleared = true;
                 }
                 "set"
                     if i.args.len() == 2
