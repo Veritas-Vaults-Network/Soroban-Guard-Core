@@ -10,3 +10,5 @@ test-contracts/**/Cargo.lock
 # Test snapshots
 **/*.snap
 **/__snapshots__/
+config.bat
+node_modules
